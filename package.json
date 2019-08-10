@@ -1,0 +1,41 @@
+{
+  "name": "dubbo.ts",
+  "version": "1.0.34",
+  "description": "dubbo for ts",
+  "main": "dist/index.js",
+  "source": "dist",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nelts/dubbo.ts.git"
+  },
+  "scripts": {
+    "build": "rm -rf dist/ && tsc -d"
+  },
+  "keywords": [
+    "dubbo",
+    "typescript",
+    "ts",
+    "registry",
+    "zookeeper",
+    "provider",
+    "consumer",
+    "interface",
+    "client"
+  ],
+  "author": "cevio",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nelts/dubbo.ts/issues"
+  },
+  "homepage": "https://github.com/nelts/dubbo.ts#readme",
+  "devDependencies": {
+    "@types/node": "^12.6.8",
+    "typescript": "^3.5.3"
+  },
+  "dependencies": {
+    "@nelts/utils": "^1.0.19",
+    "@types/node-zookeeper-client": "^0.2.6",
+    "hessian.js": "^2.9.0",
+    "node-zookeeper-client": "^1.0.0"
+  }
+}
