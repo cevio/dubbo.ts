@@ -61,7 +61,7 @@ export default class Encoder {
     if (!hasAttachments) {
       if (this.ctx.status !== PROVIDER_CONTEXT_STATUS.OK) {
         flag = PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_WITH_EXCEPTION;
-      } else if (!body) {
+      } else if (body === undefined) {
         flag = PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_NULL_VALUE;
       } else {
         flag = PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_VALUE;
@@ -69,7 +69,7 @@ export default class Encoder {
     } else {
       if (this.ctx.status !== PROVIDER_CONTEXT_STATUS.OK) {
         flag = PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_WITH_EXCEPTION_WITH_ATTACHMENTS;
-      } else if (!body) {
+      } else if (body === undefined) {
         flag = PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_NULL_VALUE_WITH_ATTACHMENTS;
       } else {
         flag = PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_VALUE_WITH_ATTACHMENTS;

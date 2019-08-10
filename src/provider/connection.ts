@@ -31,7 +31,10 @@ export default class Connection extends EventEmitter {
     ctx.interface = services[group][interacename][interfaceversion];
     if (!ctx.interface.serviceMethods.includes(ctx.method)) return this.replyError(encoder, ctx.error('cannot find the interface version:' + interfaceversion, PROVIDER_CONTEXT_STATUS.SERVER_TIMEOUT));
     Promise.resolve(this.sync('packet', ctx))
-    .then(() => this.socket.write(encoder.encode()))
+    .then(() => {
+      if (!ctx.status) ctx.status = PROVIDER_CONTEXT_STATUS.OK;
+      this.socket.write(encoder.encode());
+    })
     .catch((e: ContextError) => {
       if (!e.code || !e.ctx) e = ctx.error(e.message, e.code || PROVIDER_CONTEXT_STATUS.SERVICE_ERROR);
       this.replyError(encoder, e);

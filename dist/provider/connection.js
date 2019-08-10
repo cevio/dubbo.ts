@@ -33,7 +33,11 @@ class Connection extends utils_1.EventEmitter {
         if (!ctx.interface.serviceMethods.includes(ctx.method))
             return this.replyError(encoder, ctx.error('cannot find the interface version:' + interfaceversion, utils_2.PROVIDER_CONTEXT_STATUS.SERVER_TIMEOUT));
         Promise.resolve(this.sync('packet', ctx))
-            .then(() => this.socket.write(encoder.encode()))
+            .then(() => {
+            if (!ctx.status)
+                ctx.status = utils_2.PROVIDER_CONTEXT_STATUS.OK;
+            this.socket.write(encoder.encode());
+        })
             .catch((e) => {
             if (!e.code || !e.ctx)
                 e = ctx.error(e.message, e.code || utils_2.PROVIDER_CONTEXT_STATUS.SERVICE_ERROR);
