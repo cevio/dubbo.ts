@@ -4,23 +4,73 @@ import Decoder, { DecodeType } from './decoder';
 import { EventEmitter } from '@nelts/utils';
 import Context, { ContextError } from './context';
 import Encoder from './encoder';
-import { PROVIDER_CONTEXT_STATUS } from '../utils';
+import { PROVIDER_CONTEXT_STATUS, heartBeatEncode } from '../utils';
+interface SocketError extends Error {
+  code?: number | string
+}
 export default class Connection extends EventEmitter {
   private app: Provider;
   private socket: net.Socket;
+  private timer: NodeJS.Timer;
+  private _lastread_timestamp: number = 0;
+  private _lastwrite_timestamp: number = 0;
   constructor(app: Provider, socket: net.Socket) {
     super();
     this.app = app;
     this.socket = socket;
-    const decoder = new Decoder();
+    const heartbeat = this.app.heartbeat;
+    const heartbeat_timeout = this.app.heartbeatTimeout;
+    const decoder = new Decoder(this);
     decoder.subscribe(this.onMessage.bind(this));
     socket.on('data', (data: Buffer) => decoder.receive(data));
+    socket.on('timeout', () => this.app.sync('drop', this));
+    socket.on('drain', () => console.log('drain'))
+    socket.on('error', (err: SocketError) => this.app.logger.error(err));
+    this.timer = setInterval(() => {
+      const time = Date.now();
+      if (
+        (this._lastread_timestamp > 0 && time - this._lastread_timestamp > heartbeat_timeout) || 
+        (this._lastwrite_timestamp > 0 && time - this._lastwrite_timestamp > heartbeat_timeout)
+      ) {
+        return this.app.sync('drop', this);
+      }
+      if (
+        (this._lastread_timestamp > 0 && time - this._lastread_timestamp > heartbeat) || 
+        (this._lastwrite_timestamp && time - this._lastwrite_timestamp > heartbeat)
+      ) {
+        this.sendHeartbeat();
+      }
+    }, heartbeat);
+    this.sendHeartbeat();
+  }
+
+  set lastread(value: number) {
+    this._lastread_timestamp = value;
+  }
+
+  get lastread() {
+    return this._lastread_timestamp;
+  }
+
+  private sendHeartbeat() {
+    console.log('before write')
+    this.socket.write(heartBeatEncode());
+    this._lastwrite_timestamp = Date.now();
+    console.log('after write')
+  }
+
+  async destroy() {
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+    this.socket.destroy();
   }
 
   private onMessage(json: DecodeType) {
     const ctx = new Context(this, json);
     const encoder = new Encoder(ctx);
-    if (this.app.version !== ctx.dubboVersion) return this.replyError(encoder, ctx.error('unsupport dubbo version:' + json.dubboVersion, PROVIDER_CONTEXT_STATUS.BAD_REQUEST));
+    // if (this.app.version !== ctx.dubboVersion) return this.replyError(encoder, ctx.error('unsupport dubbo version:' + json.dubboVersion, PROVIDER_CONTEXT_STATUS.BAD_REQUEST));
     const group = ctx.group;
     const interacename = ctx.interfaceName;
     const interfaceversion = ctx.interfaceVersion;

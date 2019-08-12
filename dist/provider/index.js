@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const net = require("net");
 const utils_1 = require("@nelts/utils");
 const interface_1 = require("./interface");
 const utils_2 = require("../utils");
@@ -8,6 +9,7 @@ class Provider extends utils_1.EventEmitter {
     constructor(options) {
         super();
         this._services = [];
+        this._conns = [];
         this._services_map = {};
         this._application = options.application;
         this._root = options.root || 'dubbo';
@@ -15,6 +17,30 @@ class Provider extends utils_1.EventEmitter {
         this._registry = options.registry;
         this._port = options.port;
         this._pid = options.pid;
+        this._logger = options.logger || console;
+        this._heartbeat = options.heartbeat || 3000;
+        this._heartbeat_timeout = options.heartbeatTimeout || this._heartbeat * 3;
+        if (this._heartbeat_timeout <= this._heartbeat)
+            throw new Error('heartbeat_timeout <= heartbeat is wrong');
+        this.on('drop', async (conn) => {
+            const index = this._conns.indexOf(conn);
+            if (index > -1) {
+                this._conns.splice(index, 1);
+                await conn.destroy();
+            }
+        });
+    }
+    get logger() {
+        return this._logger;
+    }
+    get heartbeat() {
+        return this._heartbeat;
+    }
+    get heartbeatTimeout() {
+        return this._heartbeat_timeout;
+    }
+    get tcp() {
+        return this._tcp;
     }
     get version() {
         return this._version;
@@ -38,9 +64,10 @@ class Provider extends utils_1.EventEmitter {
         this._services.push(service);
         return this;
     }
-    async connection(socket) {
+    async connect(socket) {
         const conn = new connection_1.default(this, socket);
         conn.on('packet', (ctx) => this.sync('packet', ctx));
+        this._conns.push(conn);
     }
     async publish() {
         const host = utils_2.ip() + ':' + this._port;
@@ -64,6 +91,22 @@ class Provider extends utils_1.EventEmitter {
     }
     unPublish() {
         return Promise.all(this._register_uris.map(uri => utils_2.zookeeperRemoveNode(this._registry, uri)));
+    }
+    async destroy() {
+        await Promise.all(this._conns.map(conn => conn.destroy()));
+        await this.unPublish();
+        this._tcp && this._tcp.close();
+        this._registry && this._registry.destory();
+    }
+    listen(port, ...args) {
+        this._tcp = net.createServer();
+        this._tcp.on('connection', (socket) => this.connect(socket));
+        this.publish().then(() => this._tcp.listen(port, ...args));
+    }
+    close(callback) {
+        this.destroy()
+            .then(() => callback())
+            .catch(e => callback(e));
     }
 }
 exports.default = Provider;

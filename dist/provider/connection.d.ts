@@ -5,7 +5,13 @@ import { EventEmitter } from '@nelts/utils';
 export default class Connection extends EventEmitter {
     private app;
     private socket;
+    private timer;
+    private _lastread_timestamp;
+    private _lastwrite_timestamp;
     constructor(app: Provider, socket: net.Socket);
+    lastread: number;
+    private sendHeartbeat;
+    destroy(): Promise<void>;
     private onMessage;
     private replyError;
 }

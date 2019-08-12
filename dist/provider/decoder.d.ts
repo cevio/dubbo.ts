@@ -1,4 +1,5 @@
 /// <reference types="node" />
+import Connection from './connection';
 export declare type DecodeType = {
     requestId: number;
     dubboVersion: string;
@@ -19,8 +20,9 @@ export declare type DecodeType = {
 };
 export default class Decoder {
     private _buffer;
+    private _app;
     private _subscriber;
-    constructor();
+    constructor(app: Connection);
     clearBuffer(): void;
     subscribe(subscriber: (json: DecodeType) => any): this;
     receive(data: Buffer): void;

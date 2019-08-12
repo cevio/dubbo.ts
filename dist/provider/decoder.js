@@ -6,7 +6,8 @@ const MAGIC_HIGH = 0xda;
 const MAGIC_LOW = 0xbb;
 const HEADER_LENGTH = 16;
 class Decoder {
-    constructor() {
+    constructor(app) {
+        this._app = app;
         this._buffer = Buffer.alloc(0);
     }
     clearBuffer() {
@@ -49,6 +50,7 @@ class Decoder {
                 if (utils_1.isHeartBeat(header)) {
                     this._buffer = this._buffer.slice(HEADER_LENGTH + bodyLength);
                     bufferLength = this._buffer.length;
+                    this._app.lastread = Date.now();
                     return;
                 }
                 if (HEADER_LENGTH + bodyLength > bufferLength)

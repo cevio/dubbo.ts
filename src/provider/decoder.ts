@@ -1,4 +1,5 @@
 import { fromBytes4, isHeartBeat, fromBytes8, getDubboArgumentLength } from '../utils';
+import Connection from './connection';
 const hassin = require('hessian.js');
 const MAGIC_HIGH = 0xda;
 const MAGIC_LOW = 0xbb;
@@ -25,8 +26,10 @@ export type DecodeType = {
 
 export default class Decoder {
   private _buffer: Buffer;
+  private _app: Connection;
   private _subscriber: (json: DecodeType) => any;
-  constructor() {
+  constructor(app: Connection) {
+    this._app = app;
     this._buffer = Buffer.alloc(0);
   }
 
@@ -70,6 +73,7 @@ export default class Decoder {
         if (isHeartBeat(header)) {
           this._buffer = this._buffer.slice(HEADER_LENGTH + bodyLength);
           bufferLength = this._buffer.length;
+          this._app.lastread = Date.now();
           return;
         }
         if (HEADER_LENGTH + bodyLength > bufferLength) return;

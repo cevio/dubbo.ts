@@ -6,6 +6,10 @@ import { ProviderRegisterUri, zookeeperCreateNode, zookeeperRemoveNode, ip, CREA
 import Connection from './connection';
 import Context from './context';
 
+type ProviderLogger = {
+  error(...args: any[]): void
+}
+
 export type ProviderOptions = {
   application: string,
   root?: string,
@@ -13,6 +17,9 @@ export type ProviderOptions = {
   port: number,
   pid: number,
   registry: Registry,
+  heartbeat?: number,
+  heartbeatTimeout?: number,
+  logger?: ProviderLogger,
 }
 
 export default class Provider extends EventEmitter {
@@ -22,8 +29,13 @@ export default class Provider extends EventEmitter {
   private readonly _registry: Registry;
   private readonly _port: number;
   private readonly _pid: number;
+  private readonly _heartbeat: number;
+  private readonly _heartbeat_timeout: number;
+  private readonly _logger: ProviderLogger;
+  private _tcp: net.Server;
   private _register_uris: string[];
   private _services: Interface[] = [];
+  private _conns: Connection[] = [];
   private readonly _services_map: {
     [group: string]: {
       [interfacename: string]: {
@@ -40,6 +52,33 @@ export default class Provider extends EventEmitter {
     this._registry = options.registry;
     this._port = options.port;
     this._pid = options.pid;
+    this._logger = options.logger || console;
+    this._heartbeat = options.heartbeat || 3000;
+    this._heartbeat_timeout = options.heartbeatTimeout || this._heartbeat * 3;
+    if (this._heartbeat_timeout <= this._heartbeat) throw new Error('heartbeat_timeout <= heartbeat is wrong');
+    this.on('drop', async (conn: Connection) => {
+      const index = this._conns.indexOf(conn);
+      if (index > -1) {
+        this._conns.splice(index, 1);
+        await conn.destroy();
+      }
+    })
+  }
+
+  get logger() {
+    return this._logger;
+  }
+
+  get heartbeat() {
+    return this._heartbeat;
+  }
+
+  get heartbeatTimeout() {
+    return this._heartbeat_timeout;
+  }
+
+  get tcp() {
+    return this._tcp;
   }
 
   get version() {
@@ -65,9 +104,10 @@ export default class Provider extends EventEmitter {
     return this;
   }
 
-  async connection(socket: net.Socket) {
+  async connect(socket: net.Socket) {
     const conn = new Connection(this, socket);
     conn.on('packet', (ctx: Context) => this.sync('packet', ctx));
+    this._conns.push(conn);
   }
 
   async publish() {
@@ -90,12 +130,31 @@ export default class Provider extends EventEmitter {
       await zookeeperCreateNode(this._registry, interface_root_path, CREATE_MODES.PERSISTENT);
       await zookeeperCreateNode(this._registry, interface_dir_path, CREATE_MODES.PERSISTENT);
       await zookeeperCreateNode(this._registry, interface_entry_path, CREATE_MODES.EPHEMERAL);
-      return interface_entry_path
+      return interface_entry_path;
     }));
     return this;
   }
 
   unPublish() {
     return Promise.all(this._register_uris.map(uri => zookeeperRemoveNode(this._registry, uri)));
+  }
+
+  async destroy() {
+    await Promise.all(this._conns.map(conn => conn.destroy()))
+    await this.unPublish();
+    this._tcp && this._tcp.close();
+    this._registry && this._registry.destory();
+  }
+
+  listen(port: number, ...args: any[]) {
+    this._tcp = net.createServer();
+    this._tcp.on('connection', (socket: net.Socket) => this.connect(socket));
+    this.publish().then(() => this._tcp.listen(port, ...args));
+  }
+
+  close(callback?: (err?: Error) => void) {
+    this.destroy()
+      .then(() => callback())
+      .catch(e => callback(e));
   }
 }

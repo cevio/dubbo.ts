@@ -9,6 +9,7 @@
     "url": "git+https://github.com/nelts/dubbo.ts.git"
   },
   "scripts": {
+    "dev": "ts-node test/index.ts",
     "build": "rm -rf dist/ && tsc -d"
   },
   "keywords": [
@@ -34,7 +35,9 @@
   },
   "dependencies": {
     "@nelts/utils": "^1.0.19",
+    "@types/compare-versions": "^3.0.0",
     "@types/node-zookeeper-client": "^0.2.6",
+    "compare-versions": "^3.5.1",
     "hessian.js": "^2.9.0",
     "node-zookeeper-client": "^1.0.0"
   }

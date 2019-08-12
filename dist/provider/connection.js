@@ -8,17 +8,53 @@ const utils_2 = require("../utils");
 class Connection extends utils_1.EventEmitter {
     constructor(app, socket) {
         super();
+        this._lastread_timestamp = 0;
+        this._lastwrite_timestamp = 0;
         this.app = app;
         this.socket = socket;
-        const decoder = new decoder_1.default();
+        const heartbeat = this.app.heartbeat;
+        const heartbeat_timeout = this.app.heartbeatTimeout;
+        const decoder = new decoder_1.default(this);
         decoder.subscribe(this.onMessage.bind(this));
         socket.on('data', (data) => decoder.receive(data));
+        socket.on('timeout', () => this.app.sync('drop', this));
+        socket.on('drain', () => console.log('drain'));
+        socket.on('error', (err) => this.app.logger.error(err));
+        this.timer = setInterval(() => {
+            const time = Date.now();
+            if ((this._lastread_timestamp > 0 && time - this._lastread_timestamp > heartbeat_timeout) ||
+                (this._lastwrite_timestamp > 0 && time - this._lastwrite_timestamp > heartbeat_timeout)) {
+                return this.app.sync('drop', this);
+            }
+            if ((this._lastread_timestamp > 0 && time - this._lastread_timestamp > heartbeat) ||
+                (this._lastwrite_timestamp && time - this._lastwrite_timestamp > heartbeat)) {
+                this.sendHeartbeat();
+            }
+        }, heartbeat);
+        this.sendHeartbeat();
+    }
+    set lastread(value) {
+        this._lastread_timestamp = value;
+    }
+    get lastread() {
+        return this._lastread_timestamp;
+    }
+    sendHeartbeat() {
+        console.log('before write');
+        this.socket.write(utils_2.heartBeatEncode());
+        this._lastwrite_timestamp = Date.now();
+        console.log('after write');
+    }
+    async destroy() {
+        if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = null;
+        }
+        this.socket.destroy();
     }
     onMessage(json) {
         const ctx = new context_1.default(this, json);
         const encoder = new encoder_1.default(ctx);
-        if (this.app.version !== ctx.dubboVersion)
-            return this.replyError(encoder, ctx.error('unsupport dubbo version:' + json.dubboVersion, utils_2.PROVIDER_CONTEXT_STATUS.BAD_REQUEST));
         const group = ctx.group;
         const interacename = ctx.interfaceName;
         const interfaceversion = ctx.interfaceVersion;

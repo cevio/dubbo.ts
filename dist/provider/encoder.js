@@ -8,6 +8,7 @@ const HESSIAN2_SERIALIZATION_CONTENT_ID = 2;
 const DUBBO_DEFAULT_PAY_LOAD = 8 * 1024 * 1024;
 const hassin = require('hessian.js');
 const utils_1 = require("../utils");
+const compare = require("compare-versions");
 class Encoder {
     constructor(ctx) {
         this.ctx = ctx;
@@ -42,38 +43,36 @@ class Encoder {
         header.writeUInt32BE(payload, 12);
         return header;
     }
+    isSupportAttachments(version) {
+        if (!version)
+            return false;
+        if (compare(version, '2.0.10') >= 0 && compare(version, '2.6.2') <= 0)
+            return false;
+        return compare(version, '2.0.2') >= 0;
+    }
     encodeBody() {
         const encoder = new hassin.EncoderV2();
         const body = this.ctx.body;
-        const attachments = this.ctx.attachments;
-        const hasAttachments = Object.keys(attachments).length;
-        let flag;
-        if (!hasAttachments) {
-            if (this.ctx.status !== utils_1.PROVIDER_CONTEXT_STATUS.OK) {
-                flag = utils_1.PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_WITH_EXCEPTION;
-            }
-            else if (body === undefined) {
-                flag = utils_1.PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_NULL_VALUE;
-            }
-            else {
-                flag = utils_1.PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_VALUE;
-            }
+        const attachments = this.ctx.attachments || {};
+        const attach = this.isSupportAttachments(this.ctx.dubboVersion);
+        if (this.ctx.status !== utils_1.PROVIDER_CONTEXT_STATUS.OK) {
+            encoder.write(attach ? utils_1.PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_WITH_EXCEPTION_WITH_ATTACHMENTS : utils_1.PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_WITH_EXCEPTION);
+            encoder.write(body);
         }
         else {
-            if (this.ctx.status !== utils_1.PROVIDER_CONTEXT_STATUS.OK) {
-                flag = utils_1.PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_WITH_EXCEPTION_WITH_ATTACHMENTS;
-            }
-            else if (body === undefined) {
-                flag = utils_1.PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_NULL_VALUE_WITH_ATTACHMENTS;
+            if (body === undefined || body === null) {
+                encoder.write(attach ? utils_1.PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_NULL_VALUE_WITH_ATTACHMENTS : utils_1.PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_NULL_VALUE);
             }
             else {
-                flag = utils_1.PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_VALUE_WITH_ATTACHMENTS;
+                encoder.write(attach ? utils_1.PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_VALUE_WITH_ATTACHMENTS : utils_1.PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_VALUE);
+                encoder.write(body);
             }
         }
-        encoder.write(flag);
-        encoder.write(body);
-        if (hasAttachments)
-            encoder.write(attachments);
+        if (attach) {
+            encoder.write(Object.assign(attachments, {
+                dubbo: this.ctx.dubboVersion,
+            }));
+        }
         return encoder.byteBuffer._bytes.slice(0, encoder.byteBuffer._offset);
     }
 }

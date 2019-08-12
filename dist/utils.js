@@ -39,6 +39,9 @@ function ProviderRegisterUri(root, host, application, dubboversion, pid, options
             'default.timeout': options.timeout || 3000,
         }
     };
+    if (!obj.query['default.group']) {
+        delete obj.query['default.group'];
+    }
     const interface_root_path = `/${root}/${options.interface}`;
     const interface_dir_path = interface_root_path + '/providers';
     const interface_entry_path = interface_dir_path + '/' + encodeURIComponent(url.format(obj));

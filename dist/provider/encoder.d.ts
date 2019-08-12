@@ -9,5 +9,6 @@ export default class Encoder {
     encode(): Buffer;
     setRequestId(header: Buffer): void;
     encodeHead(payload: number): Buffer;
+    private isSupportAttachments;
     encodeBody(): any;
 }
