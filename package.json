@@ -1,6 +1,6 @@
 {
   "name": "dubbo.ts",
-  "version": "1.0.35",
+  "version": "1.0.36",
   "description": "dubbo for ts",
   "main": "dist/index.js",
   "source": "dist",
@@ -12,6 +12,9 @@
     "dev": "ts-node test/index.ts",
     "build": "rm -rf dist/ && tsc -d"
   },
+  "files": [
+    "dist"
+  ],
   "keywords": [
     "dubbo",
     "typescript",
