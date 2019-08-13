@@ -17,8 +17,7 @@ class Connection extends utils_1.EventEmitter {
         const decoder = new decoder_1.default(this);
         decoder.subscribe(this.onMessage.bind(this));
         socket.on('data', (data) => decoder.receive(data));
-        socket.on('timeout', () => this.app.sync('drop', this));
-        socket.on('drain', () => console.log('drain'));
+        socket.on('close', () => this.app.sync('drop', this));
         socket.on('error', (err) => this.app.logger.error(err));
         this.timer = setInterval(() => {
             const time = Date.now();
@@ -40,10 +39,8 @@ class Connection extends utils_1.EventEmitter {
         return this._lastread_timestamp;
     }
     sendHeartbeat() {
-        console.log('before write');
         this.socket.write(utils_2.heartBeatEncode());
         this._lastwrite_timestamp = Date.now();
-        console.log('after write');
     }
     async destroy() {
         if (this.timer) {

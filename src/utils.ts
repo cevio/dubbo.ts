@@ -17,12 +17,57 @@ export enum CREATE_MODES {
   EPHEMERAL_SEQUENTIAL = 3,
 }
 
+export type ConsumerInterfaceOptions = {
+  interface: string,
+  version?: string,
+  group?: string,
+}
+
+export function ConsumerRegisterUri(
+  root: string, 
+  host: string, 
+  application: string, 
+  dubboversion: string, 
+  pid: number,
+  options: ConsumerInterfaceOptions
+) {
+  const obj = {
+    protocol: "consumer",
+    slashes: true,
+    host: `${host}/${options.interface}`,
+    query: {
+      application,
+      category: "consumers",
+      dubbo: dubboversion,
+      interface: options.interface,
+      pid,
+      revision: options.version || '0.0.0',
+      side: 'consumer',
+      timestamp: Date.now(),
+      version: options.version || '0.0.0',
+      group: options.group,
+    }
+  }
+  if (!obj.query.group) {
+    delete obj.query.group;
+  }
+  const interface_root_path = `/${root}/${options.interface}`;
+  const interface_dir_path = interface_root_path + '/consumers';
+  const interface_entry_path = interface_dir_path + '/' + encodeURIComponent(url.format(obj));
+  return {
+    interface_root_path,
+    interface_dir_path,
+    interface_entry_path,
+  };
+}
+
 export function ProviderRegisterUri(
   root: string, 
   host: string, 
   application: string, 
   dubboversion: string, 
   pid: number,
+  heartbeat: number,
   options: ProviderInterfaceOptions
 ) {
   const obj = {
@@ -35,6 +80,7 @@ export function ProviderRegisterUri(
       category: "providers",
       dubbo: dubboversion,
       generic: false,
+      heartbeat: heartbeat,
       interface: options.interface,
       methods: options.methods && Array.isArray(options.methods) && options.methods.length ? options.methods.join(',') : undefined,
       pid,
@@ -106,6 +152,15 @@ export function zookeeperRemoveNode(registry: Registry, uri: string) {
   });
 }
 
+export function zookeeperExistsNode(registry: Registry, uri: string) {
+  return new Promise(function(resolve, reject) {
+    registry.zk.exists(uri, (err, stat) => {
+      if (err) return reject(err);
+      return resolve(!!stat);
+    });
+  });
+}
+
 export function toBytes4(num: number) {
   const buf = Buffer.allocUnsafe(4);
   buf.writeUInt32BE(num, 0);
@@ -131,15 +186,13 @@ export function fromBytes8(buf: Buffer) {
   return high * 4294967296 + low;
 }
 
-export function heartBeatEncode() {
+export function heartBeatEncode(isReply?: boolean) {
   const buffer = Buffer.alloc(DUBBO_HEADER_LENGTH + 1);
   buffer[0] = DUBBO_MAGIC_HEADER >>> 8;
   buffer[1] = DUBBO_MAGIC_HEADER & 0xff;
-  buffer[2] =
-      FLAG_REQEUST |
-          HESSIAN2_SERIALIZATION_CONTENT_ID |
-          FLAG_TWOWAY |
-          FLAG_EVENT;
+  buffer[2] = isReply 
+    ? HESSIAN2_SERIALIZATION_CONTENT_ID | FLAG_EVENT
+    : FLAG_REQEUST | HESSIAN2_SERIALIZATION_CONTENT_ID | FLAG_TWOWAY | FLAG_EVENT;
   buffer[15] = 1;
   buffer[16] = 0x4e;
   return buffer;
@@ -148,6 +201,11 @@ export function heartBeatEncode() {
 export function isHeartBeat(buf: Buffer) {
   const flag = buf[2];
   return (flag & FLAG_EVENT) !== 0;
+}
+
+export function isReplyHeart(buf: Buffer) {
+  const flag = buf[2];
+  return (flag & 0xE0) === 224;
 }
 
 export function getDubboArgumentLength(str: string) {

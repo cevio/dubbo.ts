@@ -1,6 +1,6 @@
 {
   "name": "dubbo.ts",
-  "version": "1.0.36",
+  "version": "1.0.37",
   "description": "dubbo for ts",
   "main": "dist/index.js",
   "source": "dist",
@@ -10,6 +10,7 @@
   },
   "scripts": {
     "dev": "ts-node test/index.ts",
+    "client": "ts-node test/client.ts",
     "build": "rm -rf dist/ && tsc -d"
   },
   "files": [
@@ -34,9 +35,11 @@
   "homepage": "https://github.com/nelts/dubbo.ts#readme",
   "devDependencies": {
     "@types/node": "^12.6.8",
+    "js-to-java": "^2.6.1",
     "typescript": "^3.5.3"
   },
   "dependencies": {
+    "@evio/intersect": "^1.0.4",
     "@nelts/utils": "^1.0.19",
     "@types/compare-versions": "^3.0.0",
     "@types/node-zookeeper-client": "^0.2.6",

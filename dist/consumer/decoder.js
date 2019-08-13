@@ -7,7 +7,7 @@ const MAGIC_LOW = 0xbb;
 const HEADER_LENGTH = 16;
 class Decoder {
     constructor(app) {
-        this._app = app;
+        this.app = app;
         this._buffer = Buffer.alloc(0);
     }
     clearBuffer() {
@@ -51,9 +51,9 @@ class Decoder {
                     const isReply = utils_1.isReplyHeart(header);
                     this._buffer = this._buffer.slice(HEADER_LENGTH + bodyLength);
                     bufferLength = this._buffer.length;
-                    this._app.lastread = Date.now();
+                    this.app.lastread = Date.now();
                     if (isReply)
-                        this._app.socket.write(utils_1.heartBeatEncode(true));
+                        this.app.client.write(utils_1.heartBeatEncode(true));
                     return;
                 }
                 if (HEADER_LENGTH + bodyLength > bufferLength)
@@ -61,31 +61,71 @@ class Decoder {
                 const dataBuffer = this._buffer.slice(0, HEADER_LENGTH + bodyLength);
                 this._buffer = this._buffer.slice(HEADER_LENGTH + bodyLength);
                 bufferLength = this._buffer.length;
-                this.dispatch(dataBuffer, bodyLength);
+                this.dispatch(dataBuffer);
             }
         }
     }
-    dispatch(bytes, bodyLen) {
+    dispatch(bytes) {
+        let res = null;
+        let err = null;
+        let attachments = {};
         const requestIdBuff = bytes.slice(4, 12);
         const requestId = utils_1.fromBytes8(requestIdBuff);
-        const body = new hassin.DecoderV2(bytes.slice(HEADER_LENGTH, HEADER_LENGTH + bodyLen));
-        const dubboVersion = body.read();
-        const interfaceName = body.read();
-        const interfaceVersion = body.read();
-        const method = body.read();
-        const argumentTypeString = body.read();
-        const i = utils_1.getDubboArgumentLength(argumentTypeString);
-        const args = [];
-        for (let j = 0; j < i; j++)
-            args.push(body.read());
-        const attachments = body.read();
-        this._subscriber({
+        const status = bytes[3];
+        if (status != utils_1.PROVIDER_CONTEXT_STATUS.OK) {
+            return this._subscriber({
+                err: new Error(bytes.slice(HEADER_LENGTH).toString()),
+                res: null,
+                attachments,
+                requestId,
+            });
+        }
+        const body = new hassin.DecoderV2(bytes.slice(HEADER_LENGTH));
+        const flag = body.readInt();
+        switch (flag) {
+            case utils_1.PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_VALUE:
+                err = null;
+                res = body.read();
+                attachments = {};
+                break;
+            case utils_1.PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_NULL_VALUE:
+                err = null;
+                res = null;
+                attachments = {};
+                break;
+            case utils_1.PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_WITH_EXCEPTION:
+                const exception = body.read();
+                err =
+                    exception instanceof Error
+                        ? exception
+                        : new Error(exception);
+                res = null;
+                attachments = {};
+                break;
+            case utils_1.PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_NULL_VALUE_WITH_ATTACHMENTS:
+                err = null;
+                res = null;
+                attachments = body.read();
+                break;
+            case utils_1.PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_VALUE_WITH_ATTACHMENTS:
+                err = null;
+                res = body.read();
+                attachments = body.read();
+                break;
+            case utils_1.PROVIDER_RESPONSE_BODY_FLAG.RESPONSE_WITH_EXCEPTION_WITH_ATTACHMENTS:
+                const exp = body.read();
+                err = exp instanceof Error ? exp : new Error(exp);
+                res = null;
+                attachments = body.read();
+                break;
+            default:
+                err = new Error(`Unknown result flag, expect '0/1/2/3/4/5', get  ${flag})`);
+                res = null;
+        }
+        return this._subscriber({
             requestId,
-            dubboVersion,
-            interfaceName,
-            interfaceVersion,
-            method,
-            parameters: args,
+            err,
+            res,
             attachments,
         });
     }

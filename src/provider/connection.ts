@@ -10,7 +10,7 @@ interface SocketError extends Error {
 }
 export default class Connection extends EventEmitter {
   private app: Provider;
-  private socket: net.Socket;
+  public socket: net.Socket;
   private timer: NodeJS.Timer;
   private _lastread_timestamp: number = 0;
   private _lastwrite_timestamp: number = 0;
@@ -23,8 +23,7 @@ export default class Connection extends EventEmitter {
     const decoder = new Decoder(this);
     decoder.subscribe(this.onMessage.bind(this));
     socket.on('data', (data: Buffer) => decoder.receive(data));
-    socket.on('timeout', () => this.app.sync('drop', this));
-    socket.on('drain', () => console.log('drain'))
+    socket.on('close', () => this.app.sync('drop', this));
     socket.on('error', (err: SocketError) => this.app.logger.error(err));
     this.timer = setInterval(() => {
       const time = Date.now();
@@ -53,10 +52,8 @@ export default class Connection extends EventEmitter {
   }
 
   private sendHeartbeat() {
-    console.log('before write')
     this.socket.write(heartBeatEncode());
     this._lastwrite_timestamp = Date.now();
-    console.log('after write')
   }
 
   async destroy() {
@@ -68,6 +65,7 @@ export default class Connection extends EventEmitter {
   }
 
   private onMessage(json: DecodeType) {
+    // console.log('json', json)
     const ctx = new Context(this, json);
     const encoder = new Encoder(ctx);
     // if (this.app.version !== ctx.dubboVersion) return this.replyError(encoder, ctx.error('unsupport dubbo version:' + json.dubboVersion, PROVIDER_CONTEXT_STATUS.BAD_REQUEST));

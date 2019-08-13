@@ -53,7 +53,6 @@ registry.destory(); // 断开zookeeper连接
 服务提供者。首先我们需要收集所有服务，并且通过`publish`方法注册到`zookeeper`上
 
 ```ts
-import * as net from 'net';
 import { Registry, Provider, ProviderContext, PROVIDER_CONTEXT_STATUS } from 'dubbo.ts';
 
 class CUSTOM_SERVICE {
@@ -109,7 +108,54 @@ provider.addService({
 
 ## Consumer
 
-暂无
+消费者。用来连接服务提供者获取rpc数据。
+
+```ts
+import { Registry, Consumer } from 'dubbo.ts';
+import * as http from 'http';
+const java = require('js-to-java');
+
+const registry = new Registry({
+  host: '192.168.2.208:2181',
+});
+
+const consumer = new Consumer({
+  application: 'dist',
+  dubbo_version: '2.0.2',
+  pid: process.pid,
+  registry: registry,
+  heartbeat: 3000,
+});
+
+process.on('SIGINT', () => {
+  let closed = false;
+  consumer.close(() => {
+    closed = true;
+  });
+  setInterval(() => {
+    if (closed) {
+      console.log('closed')
+      process.exit(0);
+    }
+  }, 300);
+});
+
+
+(async () => {
+  await registry.connect();
+  await new Promise((resolve) => {
+    http.createServer((req, res) => {
+      (async () => {
+        const invoker = await consumer.create('com.mifa.test', '1.0.0');
+        return await invoker.invoke('hello', [java.int(5), java.int(6)]);
+      })().then((data: any) => res.end(JSON.stringify(data))).catch(e => {
+        res.statusCode = 500;
+        res.end(e.stack);
+      });
+    }).listen(9001, resolve)
+  });
+})().then(() => console.log('client connected')).catch(e => console.error(e));
+```
 
 # License
 

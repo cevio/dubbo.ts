@@ -1,4 +1,3 @@
-import * as net from 'net';
 import { Registry, Provider, ProviderContext, PROVIDER_CONTEXT_STATUS } from '../src';
 
 class CUSTOM_SERVICE {

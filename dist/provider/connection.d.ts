@@ -4,7 +4,7 @@ import Provider from './index';
 import { EventEmitter } from '@nelts/utils';
 export default class Connection extends EventEmitter {
     private app;
-    private socket;
+    socket: net.Socket;
     private timer;
     private _lastread_timestamp;
     private _lastwrite_timestamp;

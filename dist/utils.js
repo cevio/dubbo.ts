@@ -15,7 +15,38 @@ var CREATE_MODES;
     CREATE_MODES[CREATE_MODES["EPHEMERAL"] = 1] = "EPHEMERAL";
     CREATE_MODES[CREATE_MODES["EPHEMERAL_SEQUENTIAL"] = 3] = "EPHEMERAL_SEQUENTIAL";
 })(CREATE_MODES = exports.CREATE_MODES || (exports.CREATE_MODES = {}));
-function ProviderRegisterUri(root, host, application, dubboversion, pid, options) {
+function ConsumerRegisterUri(root, host, application, dubboversion, pid, options) {
+    const obj = {
+        protocol: "consumer",
+        slashes: true,
+        host: `${host}/${options.interface}`,
+        query: {
+            application,
+            category: "consumers",
+            dubbo: dubboversion,
+            interface: options.interface,
+            pid,
+            revision: options.version || '0.0.0',
+            side: 'consumer',
+            timestamp: Date.now(),
+            version: options.version || '0.0.0',
+            group: options.group,
+        }
+    };
+    if (!obj.query.group) {
+        delete obj.query.group;
+    }
+    const interface_root_path = `/${root}/${options.interface}`;
+    const interface_dir_path = interface_root_path + '/consumers';
+    const interface_entry_path = interface_dir_path + '/' + encodeURIComponent(url.format(obj));
+    return {
+        interface_root_path,
+        interface_dir_path,
+        interface_entry_path,
+    };
+}
+exports.ConsumerRegisterUri = ConsumerRegisterUri;
+function ProviderRegisterUri(root, host, application, dubboversion, pid, heartbeat, options) {
     const obj = {
         protocol: "dubbo",
         slashes: true,
@@ -26,6 +57,7 @@ function ProviderRegisterUri(root, host, application, dubboversion, pid, options
             category: "providers",
             dubbo: dubboversion,
             generic: false,
+            heartbeat: heartbeat,
             interface: options.interface,
             methods: options.methods && Array.isArray(options.methods) && options.methods.length ? options.methods.join(',') : undefined,
             pid,
@@ -101,6 +133,16 @@ function zookeeperRemoveNode(registry, uri) {
     });
 }
 exports.zookeeperRemoveNode = zookeeperRemoveNode;
+function zookeeperExistsNode(registry, uri) {
+    return new Promise(function (resolve, reject) {
+        registry.zk.exists(uri, (err, stat) => {
+            if (err)
+                return reject(err);
+            return resolve(!!stat);
+        });
+    });
+}
+exports.zookeeperExistsNode = zookeeperExistsNode;
 function toBytes4(num) {
     const buf = Buffer.allocUnsafe(4);
     buf.writeUInt32BE(num, 0);
@@ -126,15 +168,13 @@ function fromBytes8(buf) {
     return high * 4294967296 + low;
 }
 exports.fromBytes8 = fromBytes8;
-function heartBeatEncode() {
+function heartBeatEncode(isReply) {
     const buffer = Buffer.alloc(DUBBO_HEADER_LENGTH + 1);
     buffer[0] = DUBBO_MAGIC_HEADER >>> 8;
     buffer[1] = DUBBO_MAGIC_HEADER & 0xff;
-    buffer[2] =
-        FLAG_REQEUST |
-            HESSIAN2_SERIALIZATION_CONTENT_ID |
-            FLAG_TWOWAY |
-            FLAG_EVENT;
+    buffer[2] = isReply
+        ? HESSIAN2_SERIALIZATION_CONTENT_ID | FLAG_EVENT
+        : FLAG_REQEUST | HESSIAN2_SERIALIZATION_CONTENT_ID | FLAG_TWOWAY | FLAG_EVENT;
     buffer[15] = 1;
     buffer[16] = 0x4e;
     return buffer;
@@ -145,6 +185,11 @@ function isHeartBeat(buf) {
     return (flag & FLAG_EVENT) !== 0;
 }
 exports.isHeartBeat = isHeartBeat;
+function isReplyHeart(buf) {
+    const flag = buf[2];
+    return (flag & 0xE0) === 224;
+}
+exports.isReplyHeart = isReplyHeart;
 function getDubboArgumentLength(str) {
     return getDubboArrayArgumentLength(str, 0);
 }

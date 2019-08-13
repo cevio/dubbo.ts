@@ -46,7 +46,7 @@ export default class Provider extends EventEmitter {
         };
     };
     addService(data: InterfaceOptions): this;
-    connect(socket: net.Socket): Promise<void>;
+    connect(socket: net.Socket): void;
     publish(): Promise<this>;
     unPublish(): Promise<unknown[]>;
     destroy(): Promise<void>;

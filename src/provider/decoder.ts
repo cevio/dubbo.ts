@@ -1,4 +1,4 @@
-import { fromBytes4, isHeartBeat, fromBytes8, getDubboArgumentLength } from '../utils';
+import { fromBytes4, isHeartBeat, fromBytes8, getDubboArgumentLength, isReplyHeart, heartBeatEncode } from '../utils';
 import Connection from './connection';
 const hassin = require('hessian.js');
 const MAGIC_HIGH = 0xda;
@@ -71,9 +71,11 @@ export default class Decoder {
         ]);
         const bodyLength = fromBytes4(bodyLengthBuff);
         if (isHeartBeat(header)) {
+          const isReply = isReplyHeart(header);
           this._buffer = this._buffer.slice(HEADER_LENGTH + bodyLength);
           bufferLength = this._buffer.length;
           this._app.lastread = Date.now();
+          if (isReply) this._app.socket.write(heartBeatEncode(true));
           return;
         }
         if (HEADER_LENGTH + bodyLength > bufferLength) return;

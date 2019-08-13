@@ -18,7 +18,7 @@ class Provider extends utils_1.EventEmitter {
         this._port = options.port;
         this._pid = options.pid;
         this._logger = options.logger || console;
-        this._heartbeat = options.heartbeat || 3000;
+        this._heartbeat = options.heartbeat || 60000;
         this._heartbeat_timeout = options.heartbeatTimeout || this._heartbeat * 3;
         if (this._heartbeat_timeout <= this._heartbeat)
             throw new Error('heartbeat_timeout <= heartbeat is wrong');
@@ -64,7 +64,7 @@ class Provider extends utils_1.EventEmitter {
         this._services.push(service);
         return this;
     }
-    async connect(socket) {
+    connect(socket) {
         const conn = new connection_1.default(this, socket);
         conn.on('packet', (ctx) => this.sync('packet', ctx));
         this._conns.push(conn);
@@ -72,7 +72,7 @@ class Provider extends utils_1.EventEmitter {
     async publish() {
         const host = utils_2.ip() + ':' + this._port;
         this._register_uris = await Promise.all(this._services.map(async (service) => {
-            const { interface_root_path, interface_dir_path, interface_entry_path, } = utils_2.ProviderRegisterUri(this._root, host, this._application, this._version, this._pid, {
+            const { interface_root_path, interface_dir_path, interface_entry_path, } = utils_2.ProviderRegisterUri(this._root, host, this._application, this._version, this._pid, this._heartbeat, {
                 interface: service.serviceInterface,
                 version: service.serviceVersion,
                 revision: service.serviceRevision,
