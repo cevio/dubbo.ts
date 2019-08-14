@@ -19,5 +19,6 @@ export default class Invoker extends EventEmitter {
     private addNewChannel;
     private removeOldChannel;
     push(configs: url.UrlWithParsedQuery): Promise<this>;
-    invoke(method: string, args: any[]): Promise<unknown>;
+    private pick;
+    invoke<T = any>(method: string, args: any[]): Promise<T>;
 }

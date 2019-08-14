@@ -69,7 +69,7 @@ export default class Invoker extends EventEmitter {
     return this;
   }
 
-  invoke(method: string, args: any[]) {
+  private pick() {
     let _channel: Channel;
     for (const [name, channel] of this._services) {
       if (!_channel) {
@@ -80,10 +80,29 @@ export default class Invoker extends EventEmitter {
         _channel = channel;
       }
     }
-    if (_channel) {
-      const methods = _channel.methods;
-      if (!methods.includes(method)) throw new Error('cannot find the method of ' + method);
-      return _channel.invoke(method, args);
+    return _channel;
+  }
+
+  async invoke<T = any>(method: string, args: any[]) {
+    let _channel = this.pick();
+    if (!_channel) {
+      await new Promise((resolve, reject) => {
+        const startTime = Date.now();
+        const timer = setInterval(() => {
+          if (Date.now() - startTime > this.app.pickTimeout) {
+            clearInterval(timer);
+            return reject(new Error('rpc invoke timeout.'));
+          }
+          _channel = this.pick();
+          if (_channel) {
+            clearInterval(timer);
+            resolve();
+          }
+        }, 33.33);
+      });
     }
+    const methods = _channel.methods;
+    if (!methods.includes(method)) throw new Error('cannot find the method of ' + method);
+    return (await _channel.invoke(method, args)) as T;
   }
 }

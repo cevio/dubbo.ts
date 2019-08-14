@@ -14,6 +14,7 @@ export declare type ConsumerOptions = {
     heartbeat?: number;
     heartbeatTimeout?: number;
     logger?: ConsumerLogger;
+    pickTimeout?: number;
 };
 export default class Consumers extends EventEmitter {
     private readonly _application;
@@ -24,9 +25,11 @@ export default class Consumers extends EventEmitter {
     private readonly _logger;
     private readonly _heartbeat;
     private readonly _heartbeat_timeout;
+    private readonly _pick_timeout;
     private readonly _services;
     private _uris;
     constructor(options: ConsumerOptions);
+    readonly pickTimeout: number;
     readonly logger: ConsumerLogger;
     readonly version: string;
     readonly application: string;

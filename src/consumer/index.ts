@@ -16,6 +16,7 @@ export type ConsumerOptions = {
   heartbeat?: number,
   heartbeatTimeout?: number,
   logger?: ConsumerLogger,
+  pickTimeout?: number,
 }
 
 export default class Consumers extends EventEmitter {
@@ -27,6 +28,7 @@ export default class Consumers extends EventEmitter {
   private readonly _logger: ConsumerLogger;
   private readonly _heartbeat: number;
   private readonly _heartbeat_timeout: number;
+  private readonly _pick_timeout: number;
   private readonly _services: Map<string, Invoker> = new Map();
   private _uris: string[] = [];
   constructor(options: ConsumerOptions) {
@@ -39,6 +41,11 @@ export default class Consumers extends EventEmitter {
     this._heartbeat = options.heartbeat || 60000;
     this._heartbeat_timeout = options.heartbeatTimeout || this._heartbeat * 3;
     this._logger = options.logger || console;
+    this._pick_timeout = options.pickTimeout || 3000;
+  }
+
+  get pickTimeout() {
+    return this._pick_timeout;
   }
 
   get logger() {

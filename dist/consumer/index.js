@@ -17,6 +17,10 @@ class Consumers extends utils_2.EventEmitter {
         this._heartbeat = options.heartbeat || 60000;
         this._heartbeat_timeout = options.heartbeatTimeout || this._heartbeat * 3;
         this._logger = options.logger || console;
+        this._pick_timeout = options.pickTimeout || 3000;
+    }
+    get pickTimeout() {
+        return this._pick_timeout;
     }
     get logger() {
         return this._logger;
