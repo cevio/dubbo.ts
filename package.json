@@ -1,12 +1,12 @@
 {
   "name": "dubbo.ts",
-  "version": "1.0.37",
+  "version": "1.0.38",
   "description": "dubbo for ts",
   "main": "dist/index.js",
   "source": "dist",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nelts/dubbo.ts.git"
+    "url": "git+https://github.com/cevio/dubbo.ts.git"
   },
   "scripts": {
     "dev": "ts-node test/index.ts",
@@ -30,9 +30,9 @@
   "author": "cevio",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/nelts/dubbo.ts/issues"
+    "url": "https://github.com/cevio/dubbo.ts/issues"
   },
-  "homepage": "https://github.com/nelts/dubbo.ts#readme",
+  "homepage": "https://github.com/cevio/dubbo.ts#readme",
   "devDependencies": {
     "@types/node": "^12.6.8",
     "js-to-java": "^2.6.1",
