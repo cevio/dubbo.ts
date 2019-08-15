@@ -109,7 +109,6 @@ export default class Channel {
   }
 
   async invoke(method: string, args: any[]) {
-    console.log(this.host);
     if (!this._client) await this.connect();
     this.active++;
     const retries = Number(this._uri.query.retries || 2);

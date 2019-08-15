@@ -91,7 +91,6 @@ class Channel {
         this.sendHeartbeat();
     }
     async invoke(method, args) {
-        console.log(this.host);
         if (!this._client)
             await this.connect();
         this.active++;
