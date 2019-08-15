@@ -15,7 +15,8 @@ export default class Invoker extends EventEmitter {
     readonly version: string;
     readonly group: string;
     readonly checking: boolean;
-    check(uris: url.UrlWithParsedQuery[]): Promise<[this[], void]>;
+    check(uris: url.UrlWithParsedQuery[]): Promise<[this[], void, void[]]>;
+    private resolveCommonChannel;
     private addNewChannel;
     private removeOldChannel;
     push(configs: url.UrlWithParsedQuery): Promise<this>;

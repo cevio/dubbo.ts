@@ -35,11 +35,16 @@ class Invoker extends utils_1.EventEmitter {
         uris.forEach(uri => map.set(uri.host, uri));
         const oldKeys = Array.from(this._services.keys());
         const newKeys = Array.from(map.keys());
-        const { adds, removes } = intersect(oldKeys, newKeys);
+        const { adds, removes, commons } = intersect(oldKeys, newKeys);
         return Promise.all([
             this.addNewChannel(adds.map(one => map.get(one))),
-            this.removeOldChannel(removes)
+            this.removeOldChannel(removes),
+            Promise.all(commons.map(one => this.resolveCommonChannel(one, map.get(one)))),
         ]).finally(() => this._checking = false);
+    }
+    resolveCommonChannel(name, chunk) {
+        const channel = this._services.get(name);
+        channel.resolve(chunk);
     }
     async addNewChannel(chunks) {
         return Promise.all(chunks.map(chunk => this.push(chunk)));

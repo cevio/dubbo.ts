@@ -1,6 +1,6 @@
 {
   "name": "dubbo.ts",
-  "version": "1.0.40",
+  "version": "1.0.41",
   "description": "dubbo for ts",
   "main": "dist/index.js",
   "source": "dist",
