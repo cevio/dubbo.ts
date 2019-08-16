@@ -75,7 +75,10 @@ export default class Decoder {
           this._buffer = this._buffer.slice(HEADER_LENGTH + bodyLength);
           bufferLength = this._buffer.length;
           this._app.lastread = Date.now();
-          if (isReply) this._app.socket.write(heartBeatEncode(true));
+          if (isReply) {
+            this._app.socket.write(heartBeatEncode(true));
+            this._app.updateWrite();
+          }
           return;
         }
         if (HEADER_LENGTH + bodyLength > bufferLength) return;

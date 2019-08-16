@@ -22,6 +22,9 @@ export default class Channel {
     readonly host: string;
     lastread: number;
     readonly client: net.Socket;
+    lastwrite: number;
+    updateWrite(): void;
+    updateRead(): void;
     onMessage(json: DecodeType): void;
     connect(): Promise<void>;
     invoke(method: string, args: any[]): Promise<unknown>;

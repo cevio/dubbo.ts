@@ -22,7 +22,10 @@ export default class Connection extends EventEmitter {
     const heartbeat_timeout = this.app.heartbeatTimeout;
     const decoder = new Decoder(this);
     decoder.subscribe(this.onMessage.bind(this));
-    socket.on('data', (data: Buffer) => decoder.receive(data));
+    socket.on('data', (data: Buffer) => {
+      this.updateRead();
+      decoder.receive(data);
+    });
     socket.on('close', () => this.app.sync('drop', this));
     socket.on('error', (err: SocketError) => this.app.logger.error(err));
     this.timer = setInterval(() => {
@@ -40,7 +43,6 @@ export default class Connection extends EventEmitter {
         this.sendHeartbeat();
       }
     }, heartbeat);
-    this.sendHeartbeat();
   }
 
   set lastread(value: number) {
@@ -49,6 +51,22 @@ export default class Connection extends EventEmitter {
 
   get lastread() {
     return this._lastread_timestamp;
+  }
+
+  get lastwrite() {
+    return this._lastwrite_timestamp;
+  }
+
+  set lastwrite(value: number) {
+    this._lastwrite_timestamp = value;
+  }
+
+  updateWrite() {
+    this.lastwrite = Date.now();
+  }
+
+  updateRead() {
+    this.lastread = Date.now();
   }
 
   private sendHeartbeat() {
@@ -82,6 +100,7 @@ export default class Connection extends EventEmitter {
     .then(() => {
       if (!ctx.status) ctx.status = PROVIDER_CONTEXT_STATUS.OK;
       this.socket.write(encoder.encode());
+      this.updateWrite();
     })
     .catch((e: ContextError) => {
       if (!e.code || !e.ctx) e = ctx.error(e.message, e.code || PROVIDER_CONTEXT_STATUS.SERVICE_ERROR);
@@ -93,5 +112,6 @@ export default class Connection extends EventEmitter {
     err.ctx.status = err.code;
     err.ctx.body = err.message;
     this.socket.write(encoder.encode());
+    this.updateWrite();
   }
 }

@@ -16,7 +16,10 @@ class Connection extends utils_1.EventEmitter {
         const heartbeat_timeout = this.app.heartbeatTimeout;
         const decoder = new decoder_1.default(this);
         decoder.subscribe(this.onMessage.bind(this));
-        socket.on('data', (data) => decoder.receive(data));
+        socket.on('data', (data) => {
+            this.updateRead();
+            decoder.receive(data);
+        });
         socket.on('close', () => this.app.sync('drop', this));
         socket.on('error', (err) => this.app.logger.error(err));
         this.timer = setInterval(() => {
@@ -30,13 +33,24 @@ class Connection extends utils_1.EventEmitter {
                 this.sendHeartbeat();
             }
         }, heartbeat);
-        this.sendHeartbeat();
     }
     set lastread(value) {
         this._lastread_timestamp = value;
     }
     get lastread() {
         return this._lastread_timestamp;
+    }
+    get lastwrite() {
+        return this._lastwrite_timestamp;
+    }
+    set lastwrite(value) {
+        this._lastwrite_timestamp = value;
+    }
+    updateWrite() {
+        this.lastwrite = Date.now();
+    }
+    updateRead() {
+        this.lastread = Date.now();
     }
     sendHeartbeat() {
         this.socket.write(utils_2.heartBeatEncode());
@@ -70,6 +84,7 @@ class Connection extends utils_1.EventEmitter {
             if (!ctx.status)
                 ctx.status = utils_2.PROVIDER_CONTEXT_STATUS.OK;
             this.socket.write(encoder.encode());
+            this.updateWrite();
         })
             .catch((e) => {
             if (!e.code || !e.ctx)
@@ -81,6 +96,7 @@ class Connection extends utils_1.EventEmitter {
         err.ctx.status = err.code;
         err.ctx.body = err.message;
         this.socket.write(encoder.encode());
+        this.updateWrite();
     }
 }
 exports.default = Connection;

@@ -50,6 +50,18 @@ class Channel {
     get client() {
         return this._client;
     }
+    get lastwrite() {
+        return this._lastwrite_timestamp;
+    }
+    set lastwrite(value) {
+        this._lastwrite_timestamp = value;
+    }
+    updateWrite() {
+        this.lastwrite = Date.now();
+    }
+    updateRead() {
+        this.lastread = Date.now();
+    }
     onMessage(json) {
         const id = json.requestId;
         if (this.callbacks.has(id)) {
@@ -71,7 +83,10 @@ class Channel {
                 resolve();
             });
         });
-        this._client.on('data', buf => this.decoder.receive(buf));
+        this._client.on('data', buf => {
+            this.updateRead();
+            this.decoder.receive(buf);
+        });
         this._client.on('error', (err) => this.app.app.logger.error(err));
         this._client.on('close', () => this.close());
         const heartbeat = this.app.app.heartbeat;
@@ -88,7 +103,6 @@ class Channel {
                 this.sendHeartbeat();
             }
         }, heartbeat);
-        this.sendHeartbeat();
     }
     async invoke(method, args) {
         if (!this._client)
@@ -113,6 +127,7 @@ class Channel {
         };
         const buf = encoder.encode(json);
         this._client.write(buf);
+        this.updateWrite();
         return await new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
                 this.callbacks.delete(id);

@@ -10,6 +10,9 @@ export default class Connection extends EventEmitter {
     private _lastwrite_timestamp;
     constructor(app: Provider, socket: net.Socket);
     lastread: number;
+    lastwrite: number;
+    updateWrite(): void;
+    updateRead(): void;
     private sendHeartbeat;
     destroy(): Promise<void>;
     private onMessage;
