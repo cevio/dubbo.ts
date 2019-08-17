@@ -66,7 +66,7 @@ export type ProviderInitOptions = {
 }
 
 export function getProviderServiceChunkId(interfacename: string, interfacegroup: string, interfaceversion: string) {
-  return `ProviderService:${interfacename}#${interfacegroup}@${interfaceversion}`;
+  return `Service:${interfacename}#${interfacegroup}@${interfaceversion}`;
 }
 
 function isLoopback(addr: string) {

@@ -23,7 +23,7 @@ exports.localhost = Object.keys(interfaces).map(function (nic) {
     return addresses.length ? addresses[0].address : undefined;
 }).filter(Boolean)[0];
 function getProviderServiceChunkId(interfacename, interfacegroup, interfaceversion) {
-    return `ProviderService:${interfacename}#${interfacegroup}@${interfaceversion}`;
+    return `Service:${interfacename}#${interfacegroup}@${interfaceversion}`;
 }
 exports.getProviderServiceChunkId = getProviderServiceChunkId;
 function isLoopback(addr) {

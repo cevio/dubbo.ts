@@ -55,6 +55,7 @@ export default class Connection {
   }
 
   disconnect() {
+    if (!this._alive) return;
     if (this._heartbet_timer) {
       clearInterval(this._heartbet_timer);
       this._heartbet_timer = null;

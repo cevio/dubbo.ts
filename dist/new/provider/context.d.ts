@@ -8,6 +8,7 @@ export default class Context {
     status: PROVIDER_CONTEXT_STATUS;
     body: any;
     attachments: {
+        dubbo?: string;
         [name: string]: any;
     };
     req: {

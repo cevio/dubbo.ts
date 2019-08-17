@@ -51,6 +51,8 @@ class Connection {
         this._lastwrite_timestamp = Date.now();
     }
     disconnect() {
+        if (!this._alive)
+            return;
         if (this._heartbet_timer) {
             clearInterval(this._heartbet_timer);
             this._heartbet_timer = null;

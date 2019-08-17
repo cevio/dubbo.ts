@@ -62,7 +62,7 @@ await registry.connect();
 registry.close();
 ```
 
-> 一般的，在`provider`或者`Consumer`中您无需关心什么时候连接，市面时候关闭，系统将自动处理。而你只要 `new Registry()`即可。
+> 一般的，在`provider`或者`Consumer`中您无需关心什么时候连接，什么时候关闭，系统将自动处理。而你只要 `new Registry()`即可。
 
 #### Provider
 

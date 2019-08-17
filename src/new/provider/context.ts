@@ -26,6 +26,7 @@ export default class Context {
   public status: PROVIDER_CONTEXT_STATUS;
   public body: any;
   public attachments: {
+    dubbo?: string,
     [name: string]: any;
   } = {};
   public req: {

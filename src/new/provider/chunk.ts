@@ -32,11 +32,7 @@ export default class ServiceChunk<T = any> {
 
   setValue(value: T) {
     if (this.interfacetarget !== undefined) throw this.provider.error('Chunk.set', this.id + ' has already setted value.');
-    Object.defineProperty(this, 'interfacetarget', {
-      get() {
-        return value;
-      }
-    });
+    Object.defineProperty(this, 'interfacetarget', { value });
   }
 
   async register() {
