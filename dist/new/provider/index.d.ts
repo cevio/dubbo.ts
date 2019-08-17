@@ -18,7 +18,7 @@ export default class Provider extends EventEmitter {
     private connections;
     constructor(options: ProviderInitOptions);
     error(method: string, message: string): Error;
-    addService(key: ProviderServiceChunkInitOptions, value: any): this;
+    addService(value: any, key: ProviderServiceChunkInitOptions): this;
     private publish;
     private unPublish;
     private connect;

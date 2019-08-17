@@ -22,7 +22,7 @@ class Provider extends utils_1.EventEmitter {
     error(method, message) {
         return new Error(`[Provider Error] <Provider.${method}>: ${message}`);
     }
-    addService(key, value) {
+    addService(value, key) {
         const chunk = new chunk_1.default(this, key);
         if (this.storage.has(chunk.id))
             throw this.error('addService', 'chunk id is exists: ' + chunk.id);

@@ -84,14 +84,14 @@ const provider = new Provider({
   heartbeat?: 60000,
 } as ProviderInitOptions);
 // 添加服务
-// addService(configs: ProviderServiceChunkInitOptions, target: any)
-provider.addService({
+// addService(service: any, configs: ProviderServiceChunkInitOptions)
+provider.addService(CUATOM_SERVICE, {
   interface: 'xxx',
   version: 'x.x.x',
   group; 'xxxx',
   methods: ['xxx', 'ddd'],
   timeout: 3000
-} as ProviderServiceChunkInitOptions, CUATOM_SERVICE);
+} as ProviderServiceChunkInitOptions);
 provider.addService(...);
 provider.addService(...);
 
@@ -137,14 +137,20 @@ type ProviderServiceChunkInitOptions = {
 
 ```ts
 import { ProviderContext, ProviderChunk, PROVIDER_CONTEXT_STATUS } from 'dubbo.ts';
-provider.on('data', async (ctx: ProviderContext, chunk: ProviderChunk<CUATOM_SERVICE>) => {
+provider.on('data', async (ctx: ProviderContext, chunk: ProviderChunk) => {
   // 反序列化数据
   const req = ctx.req;
   // 如果chunk.interfacetarget是一个class service
   // 那么我们可以这样写
   const app = new chunk.interfacetarget();
-  const result = app[<keyof CUATOM_SERVICE>req.method](...req.parameters);
+  const result = app[req.method](...req.parameters);
   ctx.body = result;
   ctx.status = PROVIDER_CONTEXT_STATUS.OK;
 })
 ```
+
+# License
+
+[MIT](http://opensource.org/licenses/MIT)
+
+Copyright (c) 2019-present, yunjie (Evio) shen

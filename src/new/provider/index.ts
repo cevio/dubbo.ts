@@ -35,7 +35,7 @@ export default class Provider extends EventEmitter {
     return new Error(`[Provider Error] <Provider.${method}>: ${message}`);
   }
 
-  public addService(key: ProviderServiceChunkInitOptions, value: any) {
+  public addService(value: any, key: ProviderServiceChunkInitOptions) {
     const chunk = new Chunk(this, key);
     if (this.storage.has(chunk.id)) throw this.error('addService', 'chunk id is exists: ' + chunk.id);
     chunk.setValue(value);
