@@ -38,12 +38,11 @@ export default class Connection {
     this._lastread_timestamp = Date.now();
     const ctx = new Context(this, buf);
     Promise.resolve(ctx.decode()).then(() => {
-      if (ctx.body !== undefined) {
-        this.send(ctx.encode());
-      }
+      if (!ctx.status) ctx.status = PROVIDER_CONTEXT_STATUS.OK;
+      this.send(ctx.encode());
     }).catch(e => {
       ctx.body = e.message;
-      if (!ctx.status) ctx.status = PROVIDER_CONTEXT_STATUS.SERVICE_ERROR;
+      if (!ctx.status || ctx.status === PROVIDER_CONTEXT_STATUS.OK) ctx.status = PROVIDER_CONTEXT_STATUS.SERVICE_ERROR;
       this.send(ctx.encode());
     });
   }

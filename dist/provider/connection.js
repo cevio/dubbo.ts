@@ -34,12 +34,12 @@ class Connection {
         this._lastread_timestamp = Date.now();
         const ctx = new context_1.default(this, buf);
         Promise.resolve(ctx.decode()).then(() => {
-            if (ctx.body !== undefined) {
-                this.send(ctx.encode());
-            }
+            if (!ctx.status)
+                ctx.status = utils_1.PROVIDER_CONTEXT_STATUS.OK;
+            this.send(ctx.encode());
         }).catch(e => {
             ctx.body = e.message;
-            if (!ctx.status)
+            if (!ctx.status || ctx.status === utils_1.PROVIDER_CONTEXT_STATUS.OK)
                 ctx.status = utils_1.PROVIDER_CONTEXT_STATUS.SERVICE_ERROR;
             this.send(ctx.encode());
         });
