@@ -1,37 +1,93 @@
 /// <reference types="node" />
-import { InterfaceConfigs as ProviderInterfaceOptions } from './provider/interface';
 import Registry from './registry';
+export declare const DUBBO_HEADER_LENGTH = 16;
+export declare const DUBBO_MAGIC_HEADER = 55995;
+export declare const FLAG_REQEUST = 128;
+export declare const FLAG_TWOWAY = 64;
+export declare const FLAG_EVENT = 32;
+export declare const HESSIAN2_SERIALIZATION_CONTENT_ID = 2;
+export declare const MAGIC_HIGH = 218;
+export declare const MAGIC_LOW = 187;
+export declare const DUBBO_DEFAULT_PAY_LOAD: number;
+export declare type RPC_CALLBACK_ARGS = {
+    code: number;
+    data?: any;
+    message?: string;
+};
+export declare type RPC_CALLBACK = (result: RPC_CALLBACK_ARGS) => void;
+export declare type ConsumerEncodeBody = {
+    path?: string;
+    requestId: number;
+    dubboVersion: string;
+    dubboInterface: string;
+    version: string;
+    methodName: string;
+    methodArgs?: any[];
+    group?: string;
+    timeout?: number;
+    application: string;
+    attachments?: {
+        [name: string]: any;
+    };
+};
+export declare type RegistryInitOptions = {
+    host: string;
+    sessionTimeout?: number;
+    spinDelay?: number;
+    retries?: number;
+    connectTimeout?: number;
+};
 export declare enum CREATE_MODES {
     PERSISTENT = 0,
     PERSISTENT_SEQUENTIAL = 2,
     EPHEMERAL = 1,
     EPHEMERAL_SEQUENTIAL = 3
 }
-export declare type ConsumerInterfaceOptions = {
+export declare const localhost: string;
+export declare type Logger = {
+    trace?(...args: any[]): void;
+    debug?(...args: any[]): void;
+    error(...args: any[]): void;
+    info(...args: any[]): void;
+    log(...args: any[]): void;
+    fatal?(...args: any[]): void;
+    warn(...args: any[]): void;
+};
+export declare type ProviderServiceChunkInitOptions = {
     interface: string;
+    revision?: string;
     version?: string;
     group?: string;
+    methods: string[];
+    delay?: number;
+    retries?: number;
+    timeout?: number;
 };
-export declare function ConsumerRegisterUri(root: string, host: string, application: string, dubboversion: string, pid: number, options: ConsumerInterfaceOptions): {
-    interface_root_path: string;
-    interface_dir_path: string;
-    interface_entry_path: string;
+export declare type ConsumerServiceInitOptions = {
+    application: string;
+    root?: string;
+    dubbo_version: string;
+    pid: number;
+    registry?: Registry;
+    logger?: Logger;
+    pickTimeout?: number;
 };
-export declare function ProviderRegisterUri(root: string, host: string, application: string, dubboversion: string, pid: number, heartbeat: number, options: ProviderInterfaceOptions): {
-    interface_root_path: string;
-    interface_dir_path: string;
-    interface_entry_path: string;
+export declare type ProviderInitOptions = {
+    application: string;
+    root?: string;
+    dubbo_version: string;
+    port: number;
+    pid: number;
+    registry: Registry;
+    heartbeat?: number;
+    logger?: Logger;
 };
-export declare function isLoopback(addr: string): boolean;
-export declare function ip(): string;
-export declare function zookeeperCreateNode(registry: Registry, uri: string, mode: CREATE_MODES): Promise<unknown>;
-export declare function zookeeperRemoveNode(registry: Registry, uri: string): Promise<unknown>;
-export declare function zookeeperExistsNode(registry: Registry, uri: string): Promise<unknown>;
+export declare function getProviderServiceChunkId(interfacename: string, interfacegroup: string, interfaceversion: string): string;
+export declare function heartBeatEncode(isReply?: boolean): Buffer;
 export declare function toBytes4(num: number): Buffer;
 export declare function fromBytes4(buf: Buffer): number;
 export declare function toBytes8(num: number): Buffer;
 export declare function fromBytes8(buf: Buffer): number;
-export declare function heartBeatEncode(isReply?: boolean): Buffer;
 export declare function isHeartBeat(buf: Buffer): boolean;
 export declare function isReplyHeart(buf: Buffer): boolean;
 export declare function getDubboArgumentLength(str: string): number;

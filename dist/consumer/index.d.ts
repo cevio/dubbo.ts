@@ -1,47 +1,17 @@
-import { EventEmitter } from '@nelts/utils';
-import Registry from '../registry';
+import { ConsumerServiceInitOptions, Logger } from "../utils";
+import Registry from "../registry";
 import Invoker from './invoker';
-import * as zookeeper from 'node-zookeeper-client';
-declare type ConsumerLogger = {
-    error(...args: any[]): void;
-};
-export declare type ConsumerOptions = {
-    application: string;
-    root?: string;
-    dubbo_version: string;
-    pid: number;
-    registry: Registry;
-    heartbeat?: number;
-    heartbeatTimeout?: number;
-    logger?: ConsumerLogger;
-    pickTimeout?: number;
-};
-export default class Consumers extends EventEmitter {
-    private readonly _application;
-    private readonly _root;
-    private readonly _version;
-    private readonly _registry;
-    private readonly _pid;
-    private readonly _logger;
-    private readonly _heartbeat;
-    private readonly _heartbeat_timeout;
-    private readonly _pick_timeout;
-    private readonly _services;
-    private _uris;
-    constructor(options: ConsumerOptions);
-    readonly pickTimeout: number;
-    readonly logger: ConsumerLogger;
-    readonly version: string;
+export default class Consumer {
     readonly application: string;
     readonly root: string;
-    readonly heartbeat: number;
-    readonly heartbeatTimeout: number;
-    close(callback: Function): void;
-    whenServiceChange(id: string, event: zookeeper.Event): void | Promise<void>;
-    private NODE_CREATED;
-    private NODE_DELETED;
-    private NODE_DATA_CHANGED;
-    private NODE_CHILDREN_CHANGED;
-    create(interfacename: string, version?: string, group?: string): Promise<Invoker>;
+    readonly version: string;
+    readonly registry: Registry;
+    readonly pid: number;
+    readonly logger: Logger;
+    readonly pick_timeout: number;
+    private readonly storage;
+    constructor(options: ConsumerServiceInitOptions);
+    get(interfacename: string, version?: string, group?: string): Promise<Invoker>;
+    close(): Promise<void>;
+    listen(): Promise<void>;
 }
-export {};

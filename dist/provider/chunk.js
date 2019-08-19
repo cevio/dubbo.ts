@@ -47,17 +47,23 @@ class ServiceChunk {
                 'default.timeout': this.interfacetimout,
             }
         };
+        if (obj.query['default.group'] === '-')
+            delete obj.query['default.group'];
+        const dubboInterfaceURL = url.format(obj);
         const interface_root_path = `/${this.provider.root}/${this.interfacename}`;
         const interface_dir_path = interface_root_path + '/providers';
-        const interface_entry_path = interface_dir_path + '/' + encodeURIComponent(url.format(obj));
+        const interface_entry_path = interface_dir_path + '/' + encodeURIComponent(dubboInterfaceURL);
         await this.provider.registry.create(interface_root_path, utils_1.CREATE_MODES.PERSISTENT);
         await this.provider.registry.create(interface_dir_path, utils_1.CREATE_MODES.PERSISTENT);
         await this.provider.registry.create(interface_entry_path, utils_1.CREATE_MODES.EPHEMERAL);
-        this.path = interface_entry_path;
+        this.zooKeeperRegisterPath = interface_entry_path;
+        this.provider.logger.info(`[Provider Register]`, this.interfacename + ':', dubboInterfaceURL);
         return this;
     }
     unRegister() {
-        return this.provider.registry.remove(this.path);
+        if (this.zooKeeperRegisterPath) {
+            return this.provider.registry.remove(this.zooKeeperRegisterPath);
+        }
     }
 }
 exports.default = ServiceChunk;

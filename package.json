@@ -1,6 +1,6 @@
 {
   "name": "dubbo.ts",
-  "version": "1.0.42",
+  "version": "1.0.43",
   "description": "dubbo for ts",
   "main": "dist/index.js",
   "source": "dist",
@@ -9,7 +9,7 @@
     "url": "git+https://github.com/cevio/dubbo.ts.git"
   },
   "scripts": {
-    "dev": "ts-node test/index.ts",
+    "server": "ts-node test/server.ts",
     "client": "ts-node test/client.ts",
     "build": "rm -rf dist/ && tsc -d"
   },

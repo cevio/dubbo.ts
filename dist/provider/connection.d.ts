@@ -1,20 +1,17 @@
 /// <reference types="node" />
 import * as net from 'net';
 import Provider from './index';
-import { EventEmitter } from '@nelts/utils';
-export default class Connection extends EventEmitter {
-    private app;
-    socket: net.Socket;
-    private timer;
+export default class Connection {
+    provider: Provider;
+    private socket;
+    private _alive;
+    private _heartbet_timer;
     private _lastread_timestamp;
     private _lastwrite_timestamp;
-    constructor(app: Provider, socket: net.Socket);
-    lastread: number;
-    lastwrite: number;
-    updateWrite(): void;
-    updateRead(): void;
-    private sendHeartbeat;
-    destroy(): Promise<void>;
-    private onMessage;
-    private replyError;
+    constructor(provider: Provider, socket: net.Socket);
+    private connect;
+    private initHeartbeat;
+    onMessage(buf: Buffer): void;
+    send(buf: Buffer): void;
+    disconnect(): void;
 }

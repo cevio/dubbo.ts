@@ -8,6 +8,7 @@ export default class Registry {
   private readonly _retries: number;
   private readonly _connectTimeout: number;
   private readonly _client: zookeeper.Client;
+  public connected: boolean = false;
   constructor(options: RegistryInitOptions) {
     this._host = options.host;
     this._sessionTimeout = options.sessionTimeout || 30000;
@@ -29,6 +30,7 @@ export default class Registry {
       }, this._connectTimeout);
       this._client.once('connected', () => {
         clearTimeout(timer);
+        this.connected = true;
         resolve();
       });
       this._client.connect();
@@ -37,6 +39,7 @@ export default class Registry {
 
   close() {
     this._client.close();
+    this.connected = false;
   }
 
   exists(uri: string) {
@@ -49,7 +52,7 @@ export default class Registry {
   }
 
   async create(uri: string, mode: CREATE_MODES) {
-    if (await this.exists(uri)) {
+    if (!(await this.exists(uri))) {
       return await new Promise((resolve, reject) => {
         this._client.create(uri, mode, (err, node) => {
           if (err) return reject(err);
@@ -68,5 +71,20 @@ export default class Registry {
         })
       })
     }
+  }
+
+  children(path: string, watchlistener?: (event: zookeeper.Event) => void): Promise<string[]> {
+    return new Promise((resolve, reject) => {
+      const callback = (err: Error, children: string[], stat?: zookeeper.Stat) => {
+        if (err) return reject(err);
+        if (stat) return resolve(children);
+        return reject(new Error('cannot find zookeeper path:' + path));
+      };
+      if (watchlistener) {
+        this._client.getChildren(path, watchlistener, callback);
+      } else {
+        this._client.getChildren(path, callback);
+      }
+    })
   }
 }

@@ -1,25 +1,24 @@
-/// <reference types="node" />
-import * as url from 'url';
-import Consumer from './index';
-import { EventEmitter } from '@nelts/utils';
-export default class Invoker extends EventEmitter {
-    readonly app: Consumer;
-    private _interfacename;
-    private _version;
-    private _group;
-    private _checking;
-    private _services;
-    constructor(app: Consumer, interfacename: string, version: string, group: string);
-    close(): void;
-    readonly interface: string;
-    readonly version: string;
-    readonly group: string;
-    readonly checking: boolean;
-    check(uris: url.UrlWithParsedQuery[]): Promise<[this[], void, void[]]>;
-    private resolveCommonChannel;
-    private addNewChannel;
-    private removeOldChannel;
-    push(configs: url.UrlWithParsedQuery): Promise<this>;
-    private pick;
+import Consumer from "./index";
+import Channel from './channel';
+import { RPC_CALLBACK_ARGS } from '../utils';
+export default class Invoker {
+    consumer: Consumer;
+    readonly interfacename: string;
+    readonly interfaceversion: string;
+    readonly interfacegroup: string;
+    private zooKeeperRegisterPath;
+    private zooKeeperRegisterRootPath;
+    private channels;
+    constructor(consumer: Consumer, interfacename: string, interfaceversion: string, interfacegroup: string);
+    close(): Promise<void>;
+    register(): Promise<this>;
+    unRegister(): Promise<unknown>;
+    subscribe(id: string): Promise<void>;
+    private notify;
+    private getChildrenListFromZooKeeper;
+    private setupChannels;
     invoke<T = any>(method: string, args: any[]): Promise<T>;
+    manyRetry(method: string, args: any[], providers: Channel[], usedChannels: Channel[], count: number): Promise<RPC_CALLBACK_ARGS>;
+    private oneRetry;
+    private resolveInvokeResult;
 }

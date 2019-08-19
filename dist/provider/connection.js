@@ -1,102 +1,64 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const decoder_1 = require("./decoder");
-const utils_1 = require("@nelts/utils");
+const utils_1 = require("../utils");
 const context_1 = require("./context");
-const encoder_1 = require("./encoder");
-const utils_2 = require("../utils");
-class Connection extends utils_1.EventEmitter {
-    constructor(app, socket) {
-        super();
-        this._lastread_timestamp = 0;
-        this._lastwrite_timestamp = 0;
-        this.app = app;
+class Connection {
+    constructor(provider, socket) {
+        this._alive = true;
+        this._lastread_timestamp = Date.now();
+        this._lastwrite_timestamp = Date.now();
+        this.provider = provider;
         this.socket = socket;
-        const heartbeat = this.app.heartbeat;
-        const heartbeat_timeout = this.app.heartbeatTimeout;
-        const decoder = new decoder_1.default(this);
-        decoder.subscribe(this.onMessage.bind(this));
-        socket.on('data', (data) => {
-            this.updateRead();
-            decoder.receive(data);
+        this.connect();
+        this.initHeartbeat();
+    }
+    connect() {
+        this.socket.on('data', buf => this.onMessage(buf));
+        this.socket.on('close', () => this.provider.disconnect(this));
+        this.socket.on('error', err => this.provider.logger.fatal(err));
+    }
+    initHeartbeat() {
+        if (this.provider.heartbeat > 0) {
+            this._heartbet_timer = setInterval(() => {
+                const time = Date.now();
+                const readTime = time - this._lastread_timestamp;
+                const writeTime = time - this._lastwrite_timestamp;
+                if (readTime > this.provider.heartbeat_timeout || writeTime > this.provider.heartbeat_timeout)
+                    return this.provider.disconnect(this);
+                if (readTime > this.provider.heartbeat || writeTime > this.provider.heartbeat)
+                    this.send(utils_1.heartBeatEncode());
+            }, this.provider.heartbeat);
+        }
+    }
+    onMessage(buf) {
+        this._lastread_timestamp = Date.now();
+        const ctx = new context_1.default(this, buf);
+        Promise.resolve(ctx.decode()).then(() => {
+            if (ctx.body !== undefined) {
+                this.send(ctx.encode());
+            }
+        }).catch(e => {
+            ctx.body = e.message;
+            if (!ctx.status)
+                ctx.status = utils_1.PROVIDER_CONTEXT_STATUS.SERVICE_ERROR;
+            this.send(ctx.encode());
         });
-        socket.on('close', () => this.app.sync('drop', this));
-        socket.on('error', (err) => this.app.logger.error(err));
-        this.timer = setInterval(() => {
-            const time = Date.now();
-            if ((this._lastread_timestamp > 0 && time - this._lastread_timestamp > heartbeat_timeout) ||
-                (this._lastwrite_timestamp > 0 && time - this._lastwrite_timestamp > heartbeat_timeout)) {
-                return this.app.sync('drop', this);
-            }
-            if ((this._lastread_timestamp > 0 && time - this._lastread_timestamp > heartbeat) ||
-                (this._lastwrite_timestamp && time - this._lastwrite_timestamp > heartbeat)) {
-                this.sendHeartbeat();
-            }
-        }, heartbeat);
     }
-    set lastread(value) {
-        this._lastread_timestamp = value;
-    }
-    get lastread() {
-        return this._lastread_timestamp;
-    }
-    get lastwrite() {
-        return this._lastwrite_timestamp;
-    }
-    set lastwrite(value) {
-        this._lastwrite_timestamp = value;
-    }
-    updateWrite() {
-        this.lastwrite = Date.now();
-    }
-    updateRead() {
-        this.lastread = Date.now();
-    }
-    sendHeartbeat() {
-        this.socket.write(utils_2.heartBeatEncode());
+    send(buf) {
+        if (!this._alive)
+            return;
+        this.socket.write(buf);
         this._lastwrite_timestamp = Date.now();
     }
-    async destroy() {
-        if (this.timer) {
-            clearInterval(this.timer);
-            this.timer = null;
+    disconnect() {
+        if (!this._alive)
+            return;
+        if (this._heartbet_timer) {
+            clearInterval(this._heartbet_timer);
+            this._heartbet_timer = null;
         }
+        this._alive = false;
         this.socket.destroy();
-    }
-    onMessage(json) {
-        const ctx = new context_1.default(this, json);
-        const encoder = new encoder_1.default(ctx);
-        const group = ctx.group;
-        const interacename = ctx.interfaceName;
-        const interfaceversion = ctx.interfaceVersion;
-        const services = this.app.services;
-        if (!services[group])
-            return this.replyError(encoder, ctx.error('cannot find the group:' + group, utils_2.PROVIDER_CONTEXT_STATUS.SERVICE_NOT_FOUND));
-        if (!services[group][interacename])
-            return this.replyError(encoder, ctx.error('cannot find the interface name:' + interacename, utils_2.PROVIDER_CONTEXT_STATUS.SERVICE_NOT_FOUND));
-        if (!services[group][interacename][interfaceversion])
-            return this.replyError(encoder, ctx.error('cannot find the interface version:' + interfaceversion, utils_2.PROVIDER_CONTEXT_STATUS.SERVICE_NOT_FOUND));
-        ctx.interface = services[group][interacename][interfaceversion];
-        if (!ctx.interface.serviceMethods.includes(ctx.method))
-            return this.replyError(encoder, ctx.error('cannot find the interface version:' + interfaceversion, utils_2.PROVIDER_CONTEXT_STATUS.SERVER_TIMEOUT));
-        Promise.resolve(this.sync('packet', ctx))
-            .then(() => {
-            if (!ctx.status)
-                ctx.status = utils_2.PROVIDER_CONTEXT_STATUS.OK;
-            this.socket.write(encoder.encode());
-            this.updateWrite();
-        })
-            .catch((e) => {
-            if (!e.code || !e.ctx)
-                e = ctx.error(e.message, e.code || utils_2.PROVIDER_CONTEXT_STATUS.SERVICE_ERROR);
-            this.replyError(encoder, e);
-        });
-    }
-    replyError(encoder, err) {
-        err.ctx.status = err.code;
-        err.ctx.body = err.message;
-        this.socket.write(encoder.encode());
-        this.updateWrite();
     }
 }
 exports.default = Connection;

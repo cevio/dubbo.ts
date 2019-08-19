@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const zookeeper = require("node-zookeeper-client");
 class Registry {
     constructor(options) {
+        this.connected = false;
         this._host = options.host;
         this._sessionTimeout = options.sessionTimeout || 30000;
         this._spinDelay = options.spinDelay || 1000;
@@ -26,6 +27,7 @@ class Registry {
             }, this._connectTimeout);
             this._client.once('connected', () => {
                 clearTimeout(timer);
+                this.connected = true;
                 resolve();
             });
             this._client.connect();
@@ -33,6 +35,7 @@ class Registry {
     }
     close() {
         this._client.close();
+        this.connected = false;
     }
     exists(uri) {
         return new Promise((resolve, reject) => {
@@ -44,7 +47,7 @@ class Registry {
         });
     }
     async create(uri, mode) {
-        if (await this.exists(uri)) {
+        if (!(await this.exists(uri))) {
             return await new Promise((resolve, reject) => {
                 this._client.create(uri, mode, (err, node) => {
                     if (err)
@@ -64,6 +67,23 @@ class Registry {
                 });
             });
         }
+    }
+    children(path, watchlistener) {
+        return new Promise((resolve, reject) => {
+            const callback = (err, children, stat) => {
+                if (err)
+                    return reject(err);
+                if (stat)
+                    return resolve(children);
+                return reject(new Error('cannot find zookeeper path:' + path));
+            };
+            if (watchlistener) {
+                this._client.getChildren(path, watchlistener, callback);
+            }
+            else {
+                this._client.getChildren(path, callback);
+            }
+        });
     }
 }
 exports.default = Registry;

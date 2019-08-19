@@ -1,160 +1,196 @@
 # dubbo.ts
 
-`dubbo.ts`提供完整的服务端和客户端整套解决方案。
+Dubbo官网 [http://dubbo.apache.org](http://dubbo.apache.org)，它主要解决java服务的RPC通信问题，而`dubbo.ts`主要参考Dubbo理念，重写在NODEJS端的dubbo的rpc通信。它提供一整套完整的包括从服务端到客户端的解决方案。
 
-## Registry
+作者参考了现有市面上的所有基于nodejs的dubbo框架，发现这些框架都只实现了客户端调用服务端的解决方案，而没有实现在nodejs上如何启动dubbo的RPC通讯的解决方案。`dubbo.ts`应运而生，作者参考了大量java的源码，相似度接近90%，对于一般企业使用dubbo的rpc通讯绰绰有余。
 
-主要使用`zookeeper`来发现注册服务。
+> `dubbo.ts` 采用 `typescript` 编写。
 
-## Server
+## Get started
 
-服务端主要作为服务提供者，提供以下功能：
+让我们一起来看看如何使用这个框架。
 
-1. [provider] 服务注册
-2. [decode] 处理客户端发送来的数据进行自定义处理
-3. [encode] 加工处理后的数据响应到客户端
-
-同时它又可以作为消费者，调用其他微服务。
-
-## Consumer
-
-客户端主要作为消费者，提供以下功能：
-
-1. [consumer] 服务注册
-2. [encode] 发送数据到服务提供者
-3. [decode] 接受数据并且自处理
-
-# Install
+### Install
 
 ```bash
-npm i dubbo.ts
+$ npm i dubbo.ts
 ```
 
-# Usage
-
-主要讲解以下几个方面：
-
-- Registry
-- Provider
-- Consumer
-
-## Registry
+### Usage
 
 ```ts
-import { Registry, RegistryOptions } from 'dubbo.ts';
-
-const registry = new Registry({ host: '127.0.0.1:2181', ... } as RegistryOptions);
-await registry.connect(); // 连接zookeeper
-registry.destory(); // 断开zookeeper连接
+import { Registry, Provider, Consumer } from 'dubbo.ts';
 ```
 
-## Provider
+#### Registry
 
-服务提供者。首先我们需要收集所有服务，并且通过`publish`方法注册到`zookeeper`上
+基于zookeeper的服务注册发现。使用来第三方的库 [node-zookeeper-client](https://www.npmjs.com/package/node-zookeeper-client)
+
+> This module is designed to resemble the ZooKeeper Java client API but with tweaks to follow the convention of Node.js modules. Developers that are familiar with the ZooKeeper Java client would be able to pick it up quickly.
+
+创建一个新的registry
 
 ```ts
-import { Registry, Provider, ProviderContext, PROVIDER_CONTEXT_STATUS } from 'dubbo.ts';
+const registry = new Registry({
+  host: '127.0.0.1:2181'
+} as RegistryInitOptions);
+await registry.connect();
+registry.close();
+```
 
-class CUSTOM_SERVICE {
-  hello(a: number, b: number) {
-    return a + b;
+Registry的初始化参数
+
+```ts
+export type RegistryInitOptions = {
+  host: string, // zookeeper 地址.
+  sessionTimeout?: number, // Session timeout in milliseconds, defaults to 30 seconds.
+  spinDelay?: number, // The delay (in milliseconds) between each connection attempts.
+  retries?: number, //  The number of retry attempts for connection loss exception.
+  connectTimeout?: number, // zookeeper 连接超时时间（毫秒）
+}
+```
+
+初始化完毕后需要连接
+
+```ts
+await registry.connect();
+```
+
+关闭连接
+
+```ts
+registry.close();
+```
+
+> 一般的，在`provider`或者`Consumer`中您无需关心什么时候连接，什么时候关闭，系统将自动处理。而你只要 `new Registry()`即可。
+
+#### Provider
+
+Dubbo的服务提供者，主要用于提供RPC通讯服务。
+
+```ts
+class CUATOM_SERVICE {
+  hello() {
+    return 123;
   }
 }
-
-const registry = new Registry({
-  host: '192.168.2.208:2181',
-});
-
+// 创建对象
 const provider = new Provider({
   application: 'test',
   dubbo_version: '2.0.2',
   port: 8080,
   pid: process.pid,
-  registry
-});
+  registry: registry,
+  heartbeat?: 60000,
+} as ProviderInitOptions);
+// 添加服务
+// addService(service: any, configs: ProviderServiceChunkInitOptions)
+provider.addService(CUATOM_SERVICE, {
+  interface: 'xxx',
+  version: 'x.x.x',
+  group; 'xxxx',
+  methods: ['xxx', 'ddd'],
+  timeout: 3000
+} as ProviderServiceChunkInitOptions);
+provider.addService(...);
+provider.addService(...);
 
-process.on('SIGINT', () => {
-  let closed = false;
-  provider.close(() => {
-    closed = true;
-  });
-  setInterval(() => {
-    if (closed) {
-      console.log('closed')
-      process.exit(0);
-    }
-  }, 300);
-});
+// 监听服务
+await provider.listen();
 
-provider.on('packet', async (ctx: ProviderContext) => {
-  const structor = ctx.interface.Constructor;
-  const a = new structor();
-  ctx.status = PROVIDER_CONTEXT_STATUS.OK;
-  ctx.body = await a[ctx.method](...ctx.parameters);
-});
-
-provider.addService({
-  interface: 'com.mifa.test',
-  version: '1.0.0',
-  methods: ['hello'],
-  target: CUSTOM_SERVICE
-});
-
-(async () => {
-  await registry.connect();
-  await provider.listen(8080, () => console.log('server start at 8080'));
-})().then(() => console.log('service published')).catch(e => console.error(e));
+// 关闭服务
+await provider.close();
 ```
 
-## Consumer
-
-消费者。用来连接服务提供者获取rpc数据。
+Provider初始化参数
 
 ```ts
-import { Registry, Consumer } from 'dubbo.ts';
-import * as http from 'http';
-const java = require('js-to-java');
+type ProviderInitOptions = {
+  application: string; // 应用名
+  root?: string; // 在zookeeper上路径的root名
+  dubbo_version: string; // dubbo版本
+  port: number; // 服务端口
+  pid: number; // 服务进程ID
+  registry?: Registry; // Registry对象
+  heartbeat?: number; // 心跳频率，如果不指定，那么不进行心跳。
+  logger?: Logger; // 日志对象
+}
+```
 
-const registry = new Registry({
-  host: '192.168.2.208:2181',
-});
+addService参数
 
+```ts
+type ProviderServiceChunkInitOptions = {
+    interface: string; // 接口名
+    revision?: string; // 接口修订版本，不指定默认为version值
+    version?: string; // 版本
+    group?: string; // 组
+    methods: string[]; // 方法列表
+    delay?: number; // 延迟调用时间（毫秒） 默认 -1 不延迟
+    retries?: number; // 超时尝试次数 默认2次
+    timeout?: number; // 请求超时时间 默认 3000ms
+}
+```
+
+通过`listen`方法启动服务后，我们可以通过事件`data`来获取反序列化后的数据
+
+```ts
+import { ProviderContext, ProviderChunk, PROVIDER_CONTEXT_STATUS } from 'dubbo.ts';
+provider.on('data', async (ctx: ProviderContext, chunk: ProviderChunk) => {
+  // 反序列化数据
+  const req = ctx.req;
+  // 如果chunk.interfacetarget是一个class service
+  // 那么我们可以这样写
+  const app = new chunk.interfacetarget();
+  const result = app[req.method](...req.parameters);
+  ctx.body = result;
+  ctx.status = PROVIDER_CONTEXT_STATUS.OK;
+})
+```
+
+#### Consumer
+
+消费者。它提供完整的服务调用方法和服务状态监听，及时创建或者销毁服务引用。
+
+创建一个消费者对象
+
+```ts
 const consumer = new Consumer({
   application: 'dist',
   dubbo_version: '2.0.2',
   pid: process.pid,
   registry: registry,
-  heartbeat: 3000,
 });
+```
 
-process.on('SIGINT', () => {
-  let closed = false;
-  consumer.close(() => {
-    closed = true;
-  });
-  setInterval(() => {
-    if (closed) {
-      console.log('closed')
-      process.exit(0);
-    }
-  }, 300);
-});
+开始监听消费者
 
+```ts
+await consumer.listen();
+```
 
-(async () => {
-  await registry.connect();
-  await new Promise((resolve) => {
-    http.createServer((req, res) => {
-      (async () => {
-        const invoker = await consumer.create('com.mifa.test', '1.0.0');
-        return await invoker.invoke('hello', [java.int(5), java.int(6)]);
-      })().then((data: any) => res.end(JSON.stringify(data))).catch(e => {
-        res.statusCode = 500;
-        res.end(e.stack);
-      });
-    }).listen(9001, resolve)
-  });
-})().then(() => console.log('client connected')).catch(e => console.error(e));
+调用一个服务，返回一个`invoker`对象
+
+```ts
+const invoker = await consumer.get('com.mifa.stib.service.ProviderService');
+```
+
+调用服务的方法
+
+```ts
+await invoker.invoke('testRpc', [java.combine('com.mifa.stib.common.RpcData', {
+    data: {"name":"gxh","age":"18","word":""},
+    headers: {
+      appName: 'dist',
+      platform: 1,
+      equipment: 1,
+      trace: 'dsafa-dsf-dsaf-sda-f-sa'
+    },
+    user: {
+      id: 1
+    },
+  }
+)])
 ```
 
 # License

@@ -3,7 +3,7 @@ import * as http from 'http';
 const java = require('js-to-java');
 
 const registry = new Registry({
-  host: '192.168.2.208:2181',
+  host: '192.168.2.150:2181',
 });
 
 const consumer = new Consumer({
@@ -11,14 +11,16 @@ const consumer = new Consumer({
   dubbo_version: '2.0.2',
   pid: process.pid,
   registry: registry,
-  heartbeat: 3000,
 });
-
+let closing = false;
 process.on('SIGINT', () => {
+  if (closing) return;
+  closing = true;
   let closed = false;
-  consumer.close(() => {
+  consumer.close().then(() => closed = true).catch(e => {
+    console.error(e);
     closed = true;
-  });
+  })
   setInterval(() => {
     if (closed) {
       console.log('closed')
@@ -27,18 +29,26 @@ process.on('SIGINT', () => {
   }, 300);
 });
 
-
-(async () => {
-  await registry.connect();
-  await new Promise((resolve) => {
-    http.createServer((req, res) => {
-      (async () => {
-        const invoker = await consumer.create('com.mifa.test', '1.0.0');
-        return await invoker.invoke('hello', [java.int(5), java.int(6)]);
-      })().then((data: any) => res.end(JSON.stringify(data))).catch(e => {
-        res.statusCode = 500;
-        res.end(e.stack);
-      });
-    }).listen(9001, resolve)
-  });
-})().then(() => console.log('client connected')).catch(e => console.error(e));
+consumer.listen().then(() => new Promise((resolve) => {
+  http.createServer((req, res) => {
+    (async () => {
+      const invoker = await consumer.get('com.mifa.stib.service.ProviderService');
+      return await invoker.invoke('testRpc', [java.combine('com.mifa.stib.common.RpcData', {
+        data: {"name":"gxh","age":"18","word":""},
+        headers: {
+          appName: 'dist',
+          platform: 1,
+          equipment: 1,
+          trace: 'dsafa-dsf-dsaf-sda-f-sa'
+        },
+        user: {
+          id: 1
+        },
+      }
+    )]);
+    })().then((data: any) => res.end(JSON.stringify(data))).catch(e => {
+      res.statusCode = 500;
+      res.end(e.stack);
+    });
+  }).listen(9001, resolve)
+})).then(() => console.log('client connected')).catch(e => console.error(e));

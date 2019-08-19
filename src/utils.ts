@@ -1,14 +1,42 @@
-import * as os from 'os';
-import * as url from 'url';
-import { InterfaceConfigs as ProviderInterfaceOptions } from './provider/interface';
 import Registry from './registry';
+import * as os from 'os';
 
-const DUBBO_HEADER_LENGTH = 16;
-const DUBBO_MAGIC_HEADER = 0xdabb;
-const FLAG_REQEUST = 0x80;
-const FLAG_TWOWAY = 0x40;
-const FLAG_EVENT = 0x20;
-const HESSIAN2_SERIALIZATION_CONTENT_ID = 2;
+export const DUBBO_HEADER_LENGTH = 16;
+export const DUBBO_MAGIC_HEADER = 0xdabb;
+export const FLAG_REQEUST = 0x80;
+export const FLAG_TWOWAY = 0x40;
+export const FLAG_EVENT = 0x20;
+export const HESSIAN2_SERIALIZATION_CONTENT_ID = 2;
+export const MAGIC_HIGH = 0xda;
+export const MAGIC_LOW = 0xbb;
+export const DUBBO_DEFAULT_PAY_LOAD = 8 * 1024 * 1024;
+
+export type RPC_CALLBACK_ARGS = { code: number, data?: any, message?: string };
+export type RPC_CALLBACK = (result: RPC_CALLBACK_ARGS) => void;
+
+export type ConsumerEncodeBody = {
+  path?: string,
+  requestId: number,
+  dubboVersion: string,
+  dubboInterface: string,
+  version: string,
+  methodName: string,
+  methodArgs?: any[],
+  group?: string,
+  timeout?: number,
+  application: string,
+  attachments?: {
+    [name: string]: any,
+  }
+}
+
+export type RegistryInitOptions = {
+  host: string,
+  sessionTimeout?: number,
+  spinDelay?: number,
+  retries?: number,
+  connectTimeout?: number,
+}
 
 export enum CREATE_MODES {
   PERSISTENT = 0,
@@ -17,97 +45,59 @@ export enum CREATE_MODES {
   EPHEMERAL_SEQUENTIAL = 3,
 }
 
-export type ConsumerInterfaceOptions = {
+const interfaces = os.networkInterfaces();
+export const localhost = Object.keys(interfaces).map(function(nic) {
+  const addresses = interfaces[nic].filter(details => details.family.toLowerCase() === "ipv4" && !isLoopback(details.address));
+  return addresses.length ? addresses[0].address : undefined;
+}).filter(Boolean)[0];
+
+export type Logger = {
+  trace?(...args: any[]): void;
+  debug?(...args: any[]): void;
+  error(...args: any[]): void;
+  info(...args: any[]): void;
+  log(...args: any[]): void;
+  fatal?(...args: any[]): void;
+  warn(...args: any[]): void;
+}
+
+export type ProviderServiceChunkInitOptions = {
   interface: string,
+  revision?: string,
   version?: string,
   group?: string,
+  methods: string[],
+  delay?: number,
+  retries?: number,
+  timeout?: number,
 }
 
-export function ConsumerRegisterUri(
-  root: string, 
-  host: string, 
-  application: string, 
-  dubboversion: string, 
+export type ConsumerServiceInitOptions = {
+  application: string,
+  root?: string,
+  dubbo_version: string,
   pid: number,
-  options: ConsumerInterfaceOptions
-) {
-  const obj = {
-    protocol: "consumer",
-    slashes: true,
-    host: `${host}/${options.interface}`,
-    query: {
-      application,
-      category: "consumers",
-      dubbo: dubboversion,
-      interface: options.interface,
-      pid,
-      revision: options.version || '0.0.0',
-      side: 'consumer',
-      timestamp: Date.now(),
-      version: options.version || '0.0.0',
-      group: options.group,
-    }
-  }
-  if (!obj.query.group) {
-    delete obj.query.group;
-  }
-  const interface_root_path = `/${root}/${options.interface}`;
-  const interface_dir_path = interface_root_path + '/consumers';
-  const interface_entry_path = interface_dir_path + '/' + encodeURIComponent(url.format(obj));
-  return {
-    interface_root_path,
-    interface_dir_path,
-    interface_entry_path,
-  };
+  registry?: Registry,
+  logger?: Logger,
+  pickTimeout?: number,
 }
 
-export function ProviderRegisterUri(
-  root: string, 
-  host: string, 
-  application: string, 
-  dubboversion: string, 
+export type ProviderInitOptions = {
+  application: string,
+  root?: string,
+  dubbo_version: string,
+  port: number,
   pid: number,
-  heartbeat: number,
-  options: ProviderInterfaceOptions
-) {
-  const obj = {
-    protocol: "dubbo",
-    slashes: true,
-    host: `${host}/${options.interface}`,
-    query: {
-      anyhost: true,
-      application,
-      category: "providers",
-      dubbo: dubboversion,
-      generic: false,
-      heartbeat: heartbeat,
-      interface: options.interface,
-      methods: options.methods && Array.isArray(options.methods) && options.methods.length ? options.methods.join(',') : undefined,
-      pid,
-      revision: options.revision || options.version || '0.0.0',
-      side: 'provider',
-      timestamp: Date.now(),
-      version: options.version || '0.0.0',
-      'default.group': options.group,
-      'default.delay': options.delay === undefined ? -1 : options.delay,
-      'default.retries': options.retries || 2,
-      'default.timeout': options.timeout || 3000,
-    }
-  }
-  if (!obj.query['default.group']) {
-    delete obj.query['default.group'];
-  }
-  const interface_root_path = `/${root}/${options.interface}`;
-  const interface_dir_path = interface_root_path + '/providers';
-  const interface_entry_path = interface_dir_path + '/' + encodeURIComponent(url.format(obj));
-  return {
-    interface_root_path,
-    interface_dir_path,
-    interface_entry_path,
-  };
+  registry: Registry,
+  heartbeat?: number,
+  logger?: Logger,
 }
 
-export function isLoopback(addr: string) {
+export function getProviderServiceChunkId(interfacename: string, interfacegroup: string, interfaceversion: string) {
+  return `Service:${interfacename}#${interfacegroup}@${interfaceversion}`;
+}
+
+function isLoopback(addr: string) {
   return (
     /^(::f{4}:)?127\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})/.test(addr) ||
     /^fe80::1$/.test(addr) ||
@@ -116,50 +106,18 @@ export function isLoopback(addr: string) {
   );
 }
 
-export function ip() {
-  const interfaces = os.networkInterfaces();
-  return Object.keys(interfaces)
-    .map(function(nic) {
-      const addresses = interfaces[nic].filter(details => details.family.toLowerCase() === "ipv4" && !isLoopback(details.address));
-      return addresses.length ? addresses[0].address : undefined;
-    })
-    .filter(Boolean)[0];
+export function heartBeatEncode(isReply?: boolean) {
+  const buffer = Buffer.alloc(DUBBO_HEADER_LENGTH + 1);
+  buffer[0] = DUBBO_MAGIC_HEADER >>> 8;
+  buffer[1] = DUBBO_MAGIC_HEADER & 0xff;
+  buffer[2] = isReply 
+    ? HESSIAN2_SERIALIZATION_CONTENT_ID | FLAG_EVENT
+    : FLAG_REQEUST | HESSIAN2_SERIALIZATION_CONTENT_ID | FLAG_TWOWAY | FLAG_EVENT;
+  buffer[15] = 1;
+  buffer[16] = 0x4e;
+  return buffer;
 }
 
-export function zookeeperCreateNode(registry: Registry, uri: string, mode: CREATE_MODES) {
-  return new Promise(function(resolve, reject) {
-    registry.zk.exists(uri, (err, stat) => {
-      if (err) return reject(err);
-      if (stat) return resolve();
-      registry.zk.create(uri, mode, (err, node) => {
-        if (err) return reject(err);
-        resolve();
-      });
-    });
-  });
-}
-
-export function zookeeperRemoveNode(registry: Registry, uri: string) {
-  return new Promise(function(resolve, reject) {
-    registry.zk.exists(uri, (err, stat) => {
-      if (err) return reject(err);
-      if (!stat) return resolve();
-      registry.zk.remove(uri, err => {
-        if (err) return reject(err);
-        resolve();
-      });
-    });
-  });
-}
-
-export function zookeeperExistsNode(registry: Registry, uri: string) {
-  return new Promise(function(resolve, reject) {
-    registry.zk.exists(uri, (err, stat) => {
-      if (err) return reject(err);
-      return resolve(!!stat);
-    });
-  });
-}
 
 export function toBytes4(num: number) {
   const buf = Buffer.allocUnsafe(4);
@@ -184,18 +142,6 @@ export function fromBytes8(buf: Buffer) {
   const high = buf.readUInt32BE(0);
   const low = buf.readUInt32BE(4);
   return high * 4294967296 + low;
-}
-
-export function heartBeatEncode(isReply?: boolean) {
-  const buffer = Buffer.alloc(DUBBO_HEADER_LENGTH + 1);
-  buffer[0] = DUBBO_MAGIC_HEADER >>> 8;
-  buffer[1] = DUBBO_MAGIC_HEADER & 0xff;
-  buffer[2] = isReply 
-    ? HESSIAN2_SERIALIZATION_CONTENT_ID | FLAG_EVENT
-    : FLAG_REQEUST | HESSIAN2_SERIALIZATION_CONTENT_ID | FLAG_TWOWAY | FLAG_EVENT;
-  buffer[15] = 1;
-  buffer[16] = 0x4e;
-  return buffer;
 }
 
 export function isHeartBeat(buf: Buffer) {

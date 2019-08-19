@@ -1,27 +1,36 @@
-import { DecodeType } from './decoder';
-import { PROVIDER_CONTEXT_STATUS } from '../utils';
+/// <reference types="node" />
 import Connection from './connection';
-import { EncodeAttachments } from './encoder';
-import Interface from './interface';
-export declare class ContextError extends Error {
-    code: PROVIDER_CONTEXT_STATUS;
-    ctx: Context;
-}
+import { PROVIDER_CONTEXT_STATUS } from '../utils';
 export default class Context {
-    readonly app: Connection;
-    readonly requestId: number;
-    readonly dubboVersion: string;
-    readonly interfaceName: string;
-    readonly interfaceVersion: string;
-    readonly method: string;
-    readonly parameters: any[];
-    readonly group: string;
-    readonly timeout: number;
-    attachments: EncodeAttachments;
+    private data;
+    private conn;
+    private decoded;
     status: PROVIDER_CONTEXT_STATUS;
     body: any;
-    interface: Interface;
-    constructor(app: Connection, json: DecodeType);
-    error(msg: string, code: PROVIDER_CONTEXT_STATUS): ContextError;
-    throw(msg: string, code?: PROVIDER_CONTEXT_STATUS): void;
+    attachments: {
+        dubbo?: string;
+        [name: string]: any;
+    };
+    req: {
+        requestId: number;
+        dubboVersion: string;
+        interfaceName: string;
+        interfaceVersion: string;
+        method: string;
+        parameters: any[];
+        attachments: {
+            path: string;
+            interface: string;
+            version: string;
+            group?: string;
+            timeout: number;
+        };
+    };
+    constructor(conn: Connection, buf: Buffer);
+    decode(): Promise<void>;
+    encode(): Buffer;
+    setRequestId(header: Buffer): void;
+    private encodeHead;
+    private isSupportAttachments;
+    private encodeBody;
 }
