@@ -51,7 +51,7 @@ function decode(channel, data, callback) {
             const status = dataBuffer[3];
             if (status != utils_1.PROVIDER_CONTEXT_STATUS.OK) {
                 return callback({
-                    err: new Error(dataBuffer.slice(utils_1.DUBBO_HEADER_LENGTH + 1).toString('utf8')),
+                    err: new Error(dataBuffer.slice(utils_1.DUBBO_HEADER_LENGTH + 2).toString('utf8')),
                     res: null,
                     attachments,
                     requestId,

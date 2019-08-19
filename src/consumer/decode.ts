@@ -65,7 +65,7 @@ export default function decode(channel: Channel, data: Buffer, callback: (option
       const status = dataBuffer[3];
       if (status != PROVIDER_CONTEXT_STATUS.OK) {
         return callback({
-          err: new Error(dataBuffer.slice(DUBBO_HEADER_LENGTH + 1).toString('utf8')),
+          err: new Error(dataBuffer.slice(DUBBO_HEADER_LENGTH + 2).toString('utf8')),
           res: null,
           attachments,
           requestId,
