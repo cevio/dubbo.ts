@@ -23,6 +23,12 @@ class Channel {
         return Number(this.service.query['default.timeout']);
     }
     invoke(method, args) {
+        if (!this.service.query.methiods || !this.service.query.methiods.split(',').includes(method)) {
+            return Promise.resolve({
+                code: 444,
+                message: 'cannot find the method of ' + method,
+            });
+        }
         this.busies++;
         let id = this._rpc_callback_id++;
         if (id === Number.MAX_SAFE_INTEGER)

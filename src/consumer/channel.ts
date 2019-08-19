@@ -33,6 +33,12 @@ export default class Channel {
   }
 
   invoke(method: string, args: any[]): PromiseLike<RPC_CALLBACK_ARGS> {
+    if (!this.service.query.methiods || !(<string>this.service.query.methiods).split(',').includes(method)) {
+      return Promise.resolve({
+        code: 444,
+        message: 'cannot find the method of ' + method,
+      });
+    }
     this.busies++;
     let id = this._rpc_callback_id++;
     if (id === Number.MAX_SAFE_INTEGER) id = 1;
