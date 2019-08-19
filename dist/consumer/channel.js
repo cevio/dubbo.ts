@@ -23,7 +23,7 @@ class Channel {
         return Number(this.service.query['default.timeout']);
     }
     invoke(method, args) {
-        if (!this.service.query.methiods || !this.service.query.methiods.split(',').includes(method)) {
+        if (!this.service.query.methods || !this.service.query.methods.split(',').includes(method)) {
             return Promise.resolve({
                 code: 444,
                 message: 'cannot find the method of ' + method,

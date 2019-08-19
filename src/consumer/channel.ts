@@ -33,7 +33,7 @@ export default class Channel {
   }
 
   invoke(method: string, args: any[]): PromiseLike<RPC_CALLBACK_ARGS> {
-    if (!this.service.query.methiods || !(<string>this.service.query.methiods).split(',').includes(method)) {
+    if (!this.service.query.methods || !(<string>this.service.query.methods).split(',').includes(method)) {
       return Promise.resolve({
         code: 444,
         message: 'cannot find the method of ' + method,
