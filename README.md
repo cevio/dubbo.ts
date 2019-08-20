@@ -70,7 +70,8 @@ $ git clone git@github.com:cevio/dubbo.ts.git
 $ cd dubbo.ts
 # 修改 test/client.ts 中 zookeeper 的地址 还有注意修改 dubbo_version 的值
 # 修改 test/server.ts 中 zookeeper 的地址 还有注意修改 dubbo_version 的值
-$ npm run dev
+$ npm run server
+$ npm run client
 $ open http://127.0.0.1:9001
 ```
 
