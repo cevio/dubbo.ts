@@ -11,7 +11,7 @@ Dubbo官网 [http://dubbo.apache.org](http://dubbo.apache.org)，它主要解决
 ```ts
 import { provide, inject } from 'injection';
 import { rpc } from '@nelts/dubbo';
-import { RPC_INPUT_SCHEMA, MIN_PROGRAM_TYPE, error } from '@node/com.stib.utils';
+import { RPC_INPUT_SCHEMA, MIN_PROGRAM_TYPE, error } from '@node/com.stib.utils'; // 私有源上的包，参考时候可忽略功能
 import WX from './wx';
 import * as ioredis from 'ioredis';
 
