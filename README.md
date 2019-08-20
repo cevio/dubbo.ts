@@ -59,6 +59,23 @@ async function OutputConsole(ctx, next) {
 }
 ```
 
+## ZooKeeper Install
+
+参考 [https://note.youdao.com/ynoteshare1/index.html?id=98a4e01e9c83f8fc5d252d5cefcc34eb&type=note](https://note.youdao.com/ynoteshare1/index.html?id=98a4e01e9c83f8fc5d252d5cefcc34eb&type=note) 或者自己安装服务端。
+
+## Preview test
+
+```bash
+$ git clone git@github.com:cevio/dubbo.ts.git
+$ cd dubbo.ts
+# 修改 test/client.ts 中 zookeeper 的地址 还有注意修改 dubbo_version 的值
+# 修改 test/server.ts 中 zookeeper 的地址 还有注意修改 dubbo_version 的值
+$ npm run dev
+$ open http://127.0.0.1:9001
+```
+
+注意： dubbo_version 的值就是当前所有dubbo的版本。
+
 ## Get started
 
 让我们一起来看看如何使用这个框架。
