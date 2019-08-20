@@ -6,6 +6,59 @@ Dubbo官网 [http://dubbo.apache.org](http://dubbo.apache.org)，它主要解决
 
 > `dubbo.ts` 采用 `typescript` 编写。
 
+如何使用到实际项目架构中，可以参考这个库的实现 [@nelts/dubbo](https://github.com/nelts/dubbo/blob/master/src/index.ts#L103)，它将duubo.ts通过AOP模型，显得更加直观，也更加贴近JAVA的注解模式。可以来看一段代码：
+
+```ts
+import { provide, inject } from 'injection';
+import { rpc } from '@nelts/dubbo';
+import { RPC_INPUT_SCHEMA, MIN_PROGRAM_TYPE, error } from '@node/com.stib.utils';
+import WX from './wx';
+import * as ioredis from 'ioredis';
+
+@provide('User')
+@rpc.interface('com.mifa.stib.service.User')
+@rpc.version('1.0.0')
+export default class UserService {
+  @inject('wx')
+  private wx: WX;
+
+  @inject('redis')
+  private redis: ioredis.Redis;
+
+  @rpc.method
+  @rpc.middleware(OutputConsole)
+  login(req: RPC_INPUT_SCHEMA) {
+    switch (req.headers.platform) {
+      case MIN_PROGRAM_TYPE.WX:
+        if (req.data.code) return this.wx.codeSession(req.data.code);
+        return this.wx.jsLogin(req.data, req.headers.appName);
+      case MIN_PROGRAM_TYPE.WX_SDK: return this.wx.sdkLogin(req.data.code, req.headers.appName);
+      default: throw error('不支持的登录类型');
+    }
+  }
+
+  @rpc.method
+  async status(req: RPC_INPUT_SCHEMA) {
+    if (!req.headers.userToken) throw error('401 Not logined', 401);
+    const value = await this.redis.get(req.headers.userToken);
+    if (!value) throw error('401 Not logined', 401);
+    const user = await this.redis.hgetall(value);
+    if (!value) throw error('401 Not logined', 401);
+    user.sex = Number(user.sex);
+    user.id = undefined;
+    user.create_time = undefined;
+    user.modify_time = undefined;
+    user.unionid = undefined;
+    return user;
+  }
+}
+
+async function OutputConsole(ctx, next) {
+  console.log('in middleware');
+  await next()
+}
+```
+
 ## Get started
 
 让我们一起来看看如何使用这个框架。
