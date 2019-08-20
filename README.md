@@ -74,7 +74,7 @@ $ npm run dev
 $ open http://127.0.0.1:9001
 ```
 
-注意： dubbo_version 的值就是当前所有dubbo的版本。
+注意： dubbo_version 的值就是当前所用dubbo的版本。
 
 ## Get started
 
