@@ -2,7 +2,7 @@
 
 Dubbo官网 [http://dubbo.apache.org](http://dubbo.apache.org)，它主要解决java服务的RPC通信问题，而`dubbo.ts`主要参考Dubbo理念，重写在NODEJS端的dubbo的rpc通信。它提供一整套完整的包括从服务端到客户端的解决方案。
 
-![dubbo](http://dubbo.apache.org/img/architecture.png)
+<img style="height:200px;" align="center" src="http://dubbo.apache.org/img/architecture.png" />
 
 作者参考了现有市面上的所有基于nodejs的dubbo框架，发现这些框架都只实现了客户端调用服务端的解决方案，而没有实现在nodejs上如何启动dubbo的RPC通讯的解决方案。`dubbo.ts`应运而生，作者参考了大量java的源码，相似度接近90%，对于一般企业使用dubbo的rpc通讯绰绰有余。
 
