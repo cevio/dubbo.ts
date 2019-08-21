@@ -114,9 +114,9 @@ export default class Context {
         };
         this.decoded = true;
         const id = getProviderServiceChunkId(
-          this.req.attachments.interface,
+          interfaceName,
           this.req.attachments.group || '-',
-          this.req.attachments.version || '0.0.0'
+          interfaceVersion || '0.0.0'
         );
         const chunk = this.conn.provider.getChunkById(id);
         return this.conn.provider.emit('data', this, chunk);
