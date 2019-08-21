@@ -82,6 +82,8 @@ class Invoker {
         return result;
     }
     async setupChannels(list) {
+        if (!list.length)
+            return 0;
         const current = new Map();
         list.forEach(l => current.set(l.host, l));
         const oldKeys = Array.from(this.channels.keys());
@@ -110,6 +112,7 @@ class Invoker {
             }
         });
         await Promise.all(task);
+        return list.length;
     }
     async invoke(method, args) {
         let providers = Array.from(this.channels.values());

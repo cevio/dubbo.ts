@@ -22,7 +22,12 @@ class Consumer {
         const invoker = new invoker_1.default(this, interfacename, version, group);
         this.storage.set(id, invoker);
         await invoker.register();
-        await invoker.subscribe(id);
+        const count = await invoker.subscribe(id);
+        if (count === 0) {
+            await invoker.close();
+            this.storage.delete(id);
+            throw new Error('cannot find the interface of ' + interfacename);
+        }
         return invoker;
     }
     async close() {

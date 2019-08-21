@@ -97,6 +97,7 @@ export default class Invoker {
   }
 
   private async setupChannels(list: url.UrlWithParsedQuery[]) {
+    if (!list.length) return 0;
     const current: Map<string, url.UrlWithParsedQuery> = new Map();
     list.forEach(l => current.set(l.host, l));
     const oldKeys = Array.from(this.channels.keys());
@@ -125,6 +126,7 @@ export default class Invoker {
       }
     });
     await Promise.all(task);
+    return list.length;
   }
 
   public async invoke<T = any>(method: string, args: any[]): Promise<T> {

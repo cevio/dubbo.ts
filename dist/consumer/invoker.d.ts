@@ -13,7 +13,7 @@ export default class Invoker {
     close(): Promise<void>;
     register(): Promise<this>;
     unRegister(): Promise<unknown>;
-    subscribe(id: string): Promise<void>;
+    subscribe(id: string): Promise<number>;
     private notify;
     private getChildrenListFromZooKeeper;
     private setupChannels;
