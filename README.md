@@ -77,7 +77,7 @@ $ npm run client
 $ open http://127.0.0.1:9001
 ```
 
-注意： dubbo_version 的值就是当前所用dubbo的版本。
+注意： dubbo_version 的值就是当前所用dubbo的版本。具体代码可以参考 `test/client.ts` 与 `test/server.ts`。
 
 ## Get started
 
@@ -248,7 +248,10 @@ await consumer.listen();
 const invoker = await consumer.get('com.mifa.stib.service.ProviderService');
 ```
 
-调用服务的方法
+调用服务的方法 `[Invoker].invoke(methodname, methodArgs)`;
+
+- `methodname` 方法名
+- `methodArgs` 方法参数数组
 
 ```ts
 await invoker.invoke('testRpc', [java.combine('com.mifa.stib.common.RpcData', {
@@ -266,6 +269,12 @@ await invoker.invoke('testRpc', [java.combine('com.mifa.stib.common.RpcData', {
 )])
 ```
 
+停止服务
+
+```ts
+await consumer.close();
+```
+
 # Swagger
 
 微服务swagger方法，采用zookeeper自管理方案。通过微服务启动，收集`interface`与`method`信息上报到自定义`zookeeper`节点来完成数据上报。前端服务，可以通过读取这个节点信息来获得具体的接口与方法。
@@ -276,7 +285,7 @@ await invoker.invoke('testRpc', [java.combine('com.mifa.stib.common.RpcData', {
 /swagger/{subject}/{interface}/exports/{base64 data}
 ```
 
-分贝解析下参数：
+url参数：
 
 - **subject** 总项目命名节点名
 - **interface** 接口名
@@ -303,7 +312,103 @@ type Base64DataType = {
 
 最终将数据base64后再进行`encodeURIComponent`操作，最后插入zookeeper的节点即可。
 
+在Provider程序中，我们可以这样使用来发布到zookeeper:
 
+```ts
+import { SwaggerProvider, Provider } from 'dubbo.ts';
+const swagger = new SwaggerProvider('subject name', provider as Provider);
+await swagger.publish(); // 发布
+await swagger.unPublish(); // 卸载
+```
+
+在具体微服务的service上，我们可以这样写
+
+```ts
+import { provide, inject } from 'injection';
+import { rpc } from '@nelts/dubbo';
+import { RPC_INPUT_SCHEMA, MIN_PROGRAM_TYPE, error, RpcRequestParameter, RpcResponseParameter } from '@node/com.stib.utils';
+import WX from './wx';
+import * as ioredis from 'ioredis';
+import Relations from './relations';
+import { tableName as WxTableName } from '../tables/stib.user.wx';
+
+@provide('User')
+@rpc.interface('com.mifa.stib.service.UserService')
+@rpc.version('1.0.0')
+@rpc.description('用户中心服务接口')
+export default class UserService {
+  @inject('wx')
+  private wx: WX;
+
+  @inject('redis')
+  private redis: ioredis.Redis;
+
+  @inject('relation')
+  private rel: Relations;
+
+  @rpc.method
+  @rpc.summay('用户统一登录')
+  @rpc.parameters(RpcRequestParameter({
+    type: 'object',
+    properties: {
+      code: {
+        type: 'string'
+      }
+    }
+  }))
+  @rpc.response(RpcResponseParameter({ type: 'string' }))
+  login(req: RPC_INPUT_SCHEMA) {
+    switch (req.headers.platform) {
+      case MIN_PROGRAM_TYPE.WX:
+        if (req.data.code) return this.wx.codeSession(req.data.code);
+        return this.wx.jsLogin(req.data, req.headers.appName);
+      case MIN_PROGRAM_TYPE.WX_SDK: return this.wx.sdkLogin(req.data.code, req.headers.appName);
+      default: throw error('不支持的登录类型');
+    }
+  }
+
+  @rpc.method
+  @rpc.parameters(RpcRequestParameter())
+  @rpc.summay('获取当前用户状态')
+  async status(req: RPC_INPUT_SCHEMA) {
+    if (!req.headers.userToken) throw error('401 Not logined', 401);
+    const rid = await this.redis.get(req.headers.userToken);
+    if (!rid) throw error('401 Not logined', 401);
+    const user = await this.getUserDetailInfoByRelationId(Number(rid)).catch(e => Promise.reject(error('401 Not logined', 401)));
+    user.sex = Number(user.sex);
+    Reflect.deleteProperty(user, 'id');
+    Reflect.deleteProperty(user, 'create_time');
+    Reflect.deleteProperty(user, 'modify_time');
+    Reflect.deleteProperty(user, 'unionid');
+    return user;
+  }
+
+  @rpc.method
+  @rpc.summay('获取某个用户详细信息')
+  @rpc.parameters(RpcRequestParameter({
+    type: 'object',
+    properties: {
+      rid: {
+        type: 'integer'
+      }
+    }
+  }))
+  async getUserDetailInfo(req: RPC_INPUT_SCHEMA) {
+    return await this.getUserDetailInfoByRelationId(req.data.rid as number);
+  }
+
+  async getUserDetailInfoByRelationId(sid: number) {
+    const relations: {
+      f: string,
+      p: string,
+      s: string,
+    } = await this.rel.get(sid);
+    switch (relations.f) {
+      case WxTableName: return await this.wx.getUserinfo(relations.f, Number(relations.s));
+    }
+  }
+}
+```
 
 # License
 
