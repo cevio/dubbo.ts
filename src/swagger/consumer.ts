@@ -14,7 +14,7 @@ export default class SwaggerConsumer {
     const interfaces: string[] = await this.registry.children(this.subjectRootPath);
     await Promise.all(interfaces.map(inter => {
       return this.registry.children(this.subjectRootPath + '/' + inter + '/exports').then(items => {
-        const value = items.map(item => JSON.parse(Buffer.from(item, 'base64').toString('utf8')));
+        const value = items.map(item => JSON.parse(Buffer.from(decodeURIComponent(item), 'base64').toString('utf8')));
         res[inter] = value;
       }).catch(Promise.resolve);
     }));

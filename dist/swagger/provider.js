@@ -32,7 +32,7 @@ class SwaggerProvider {
         res.group = chunk.interfacegroup;
         res.version = chunk.interfaceversion;
         res.methods = chunk.interfacemethodparameters;
-        return Buffer.from(JSON.stringify(res), 'utf8').toString('base64');
+        return encodeURIComponent(Buffer.from(JSON.stringify(res), 'utf8').toString('base64'));
     }
 }
 exports.default = SwaggerProvider;
