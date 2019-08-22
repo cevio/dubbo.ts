@@ -75,6 +75,7 @@ export type ProviderServiceChunkMethodParametersSchema = {
 
 export type ProviderServiceChunkMethodParametersOptions = {
   [name: string]: {
+    summary?: string,
     input: ProviderServiceChunkMethodParametersSchema[],
     output?: any,
   }

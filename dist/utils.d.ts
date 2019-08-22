@@ -65,6 +65,7 @@ export declare type ProviderServiceChunkMethodParametersSchema = {
 };
 export declare type ProviderServiceChunkMethodParametersOptions = {
     [name: string]: {
+        summary?: string;
         input: ProviderServiceChunkMethodParametersSchema[];
         output?: any;
     };

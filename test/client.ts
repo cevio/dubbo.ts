@@ -47,7 +47,10 @@ consumer.listen().then(() => new Promise((resolve) => {
       //   },
       // })]);
       return swagger.get();
-    })().then((data: any) => res.end(JSON.stringify(data))).catch(e => {
+    })().then((data: any) => {
+      res.setDefaultEncoding('utf8');
+      res.end(JSON.stringify(data));
+    }).catch(e => {
       res.statusCode = 500;
       res.end(e.stack);
     });

@@ -53,6 +53,7 @@ provider.addService(CUSTOM_SERVICE, {
   methods: ['hello'],
   parameters: {
     hello: {
+      summary: '何洛洛我',
       input: [
         {
           $class: 'java.util.integer',
