@@ -1,5 +1,4 @@
 import Registery from '../registry';
-import { ProviderServiceChunkMethodParametersOptions } from '../utils';
 export default class SwaggerConsumer {
   private readonly subject: string;
   private readonly subjectRootPath: string;

@@ -51,8 +51,9 @@ provider.addService(CUSTOM_SERVICE, {
   interface: 'com.mifa.test',
   version: '1.0.0',
   methods: ['hello'],
-  parameters: {
-    hello: {
+  parameters: [
+    {
+      name: 'hello',
       summary: '何洛洛我',
       input: [
         {
@@ -66,7 +67,7 @@ provider.addService(CUSTOM_SERVICE, {
         type: 'integer'
       }
     }
-  }
+  ]
 });
 
 provider.listen().then(() => swagger.publish()).then(() => console.log('service published')).catch(e => console.error(e));

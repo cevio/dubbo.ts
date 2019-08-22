@@ -11,7 +11,7 @@ export default class ServiceChunk<T = any> {
     readonly interfaceretries: number;
     readonly interfacetimout: number;
     readonly interfacetarget: T;
-    readonly interfacemethodparameters: ProviderServiceChunkMethodParametersOptions;
+    readonly interfacemethodparameters: ProviderServiceChunkMethodParametersOptions[];
     readonly interfacedescription: string;
     private zooKeeperRegisterPath;
     constructor(provider: Provider, options: ProviderServiceChunkInitOptions);

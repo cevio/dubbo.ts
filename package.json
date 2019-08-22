@@ -1,6 +1,6 @@
 {
   "name": "dubbo.ts",
-  "version": "1.0.55",
+  "version": "1.0.56",
   "description": "dubbo for ts",
   "main": "dist/index.js",
   "source": "src",
@@ -25,7 +25,8 @@
     "provider",
     "consumer",
     "interface",
-    "client"
+    "client",
+    "swagger"
   ],
   "author": "cevio",
   "license": "MIT",

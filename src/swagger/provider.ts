@@ -33,7 +33,7 @@ export default class SwaggerProvider {
   }
 
   private format(chunk: ProviderChunk) {
-    const res: SwaggerBase64DataType = { methods: {} };
+    const res: SwaggerBase64DataType = { methods: [] };
     res.description = chunk.interfacedescription;
     res.group = chunk.interfacegroup;
     res.version = chunk.interfaceversion;

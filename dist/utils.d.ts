@@ -57,18 +57,17 @@ export declare type SwaggerBase64DataType = {
     description?: string;
     group?: string;
     version?: string;
-    methods: ProviderServiceChunkMethodParametersOptions;
+    methods: ProviderServiceChunkMethodParametersOptions[];
 };
 export declare type ProviderServiceChunkMethodParametersSchema = {
     $class: string;
     $schema: any;
 };
 export declare type ProviderServiceChunkMethodParametersOptions = {
-    [name: string]: {
-        summary?: string;
-        input: ProviderServiceChunkMethodParametersSchema[];
-        output?: any;
-    };
+    name: string;
+    summary?: string;
+    input: ProviderServiceChunkMethodParametersSchema[];
+    output?: any;
 };
 export declare type ProviderServiceChunkInitOptions = {
     interface: string;
@@ -80,7 +79,7 @@ export declare type ProviderServiceChunkInitOptions = {
     retries?: number;
     timeout?: number;
     description?: string;
-    parameters?: ProviderServiceChunkMethodParametersOptions;
+    parameters?: ProviderServiceChunkMethodParametersOptions[];
 };
 export declare type ConsumerServiceInitOptions = {
     application: string;
