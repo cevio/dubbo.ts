@@ -52,14 +52,19 @@ provider.addService(CUSTOM_SERVICE, {
   version: '1.0.0',
   methods: ['hello'],
   parameters: {
-    hello: [
-      {
-        $class: 'java.util.integer',
-        $schema: {
-          type: 'integer'
+    hello: {
+      input: [
+        {
+          $class: 'java.util.integer',
+          $schema: {
+            type: 'integer'
+          }
         }
+      ],
+      output: {
+        type: 'integer'
       }
-    ]
+    }
   }
 });
 

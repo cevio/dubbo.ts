@@ -11,7 +11,7 @@ export default class SwaggerConsumer {
   }
 
   async get() {
-    const res: ProviderServiceChunkMethodParametersOptions = {};
+    const res: any = {};
     const interfaces: string[] = await this.registry.children(this.subjectRootPath);
     await Promise.all(interfaces.map(inter => {
       return this.registry.children(this.subjectRootPath + '/' + inter + '/exports').then(items => {

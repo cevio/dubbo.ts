@@ -1,9 +1,9 @@
 {
   "name": "dubbo.ts",
-  "version": "1.0.52",
+  "version": "1.0.53",
   "description": "dubbo for ts",
   "main": "dist/index.js",
-  "source": "dist",
+  "source": "src",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/cevio/dubbo.ts.git"

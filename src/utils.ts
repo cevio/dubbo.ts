@@ -70,9 +70,12 @@ export type SwaggerBase64DataType = {
 
 export type ProviderServiceChunkMethodParametersOptions = {
   [name: string]: {
-    $class: string,
-    $schema: any,
-  }[]
+    input: {
+      $class: string,
+      $schema: any,
+    }[],
+    output?: any,
+  }
 }
 
 export type ProviderServiceChunkInitOptions = {
