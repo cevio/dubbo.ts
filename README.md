@@ -301,7 +301,7 @@ type Base64DataType = {
 }
 ```
 
-最终将数据base64后插入zookeeper的节点即可。
+最终将数据base64后再进行`encodeURIComponent`操作，最后插入zookeeper的节点即可。
 
 
 
