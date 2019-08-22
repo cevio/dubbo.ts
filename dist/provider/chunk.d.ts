@@ -1,5 +1,5 @@
 import Provider from './index';
-import { ProviderServiceChunkInitOptions } from '../utils';
+import { ProviderServiceChunkInitOptions, ProviderServiceChunkMethodParametersOptions } from '../utils';
 export default class ServiceChunk<T = any> {
     private provider;
     readonly interfacename: string;
@@ -11,6 +11,8 @@ export default class ServiceChunk<T = any> {
     readonly interfaceretries: number;
     readonly interfacetimout: number;
     readonly interfacetarget: T;
+    readonly interfacemethodparameters: ProviderServiceChunkMethodParametersOptions;
+    readonly interfacedescription: string;
     private zooKeeperRegisterPath;
     constructor(provider: Provider, options: ProviderServiceChunkInitOptions);
     readonly id: string;

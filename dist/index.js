@@ -19,4 +19,8 @@ const channel_1 = require("./consumer/channel");
 exports.ConsumerChannel = channel_1.default;
 const registry_1 = require("./registry");
 exports.Registry = registry_1.default;
+const provider_2 = require("./swagger/provider");
+exports.SwaggerProvider = provider_2.default;
+const consumer_2 = require("./swagger/consumer");
+exports.SwaggerConsumer = consumer_2.default;
 __export(require("./utils"));

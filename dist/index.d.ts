@@ -6,5 +6,7 @@ import Consumer from './consumer';
 import ConsumerInvoker from './consumer/invoker';
 import ConsumerChannel from './consumer/channel';
 import Registry from './registry';
+import SwaggerProvider from './swagger/provider';
+import SwaggerConsumer from './swagger/consumer';
 export * from './utils';
-export { Registry, Provider, ProviderChunk, ProviderContext, ProviderConnection, Consumer, ConsumerInvoker, ConsumerChannel, };
+export { Registry, Provider, ProviderChunk, ProviderContext, ProviderConnection, Consumer, ConsumerInvoker, ConsumerChannel, SwaggerProvider, SwaggerConsumer, };

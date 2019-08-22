@@ -13,6 +13,8 @@ class ServiceChunk {
         this.interfacedelay = options.delay === undefined ? -1 : options.delay;
         this.interfaceretries = options.retries || 2;
         this.interfacetimout = options.timeout || 3000;
+        this.interfacemethodparameters = options.parameters;
+        this.interfacedescription = options.description;
     }
     get id() {
         return utils_1.getProviderServiceChunkId(this.interfacename, this.interfacegroup, this.interfaceversion);

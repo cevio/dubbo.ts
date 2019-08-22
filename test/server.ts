@@ -1,4 +1,4 @@
-import { Registry, Provider, ProviderContext, PROVIDER_CONTEXT_STATUS, ProviderChunk } from '../src';
+import { Registry, Provider, ProviderContext, PROVIDER_CONTEXT_STATUS, ProviderChunk, SwaggerProvider } from '../src';
 
 class CUSTOM_SERVICE {
   hello(a: number, b: number) {
@@ -18,12 +18,13 @@ const provider = new Provider({
   registry,
   heartbeat: 60000,
 });
+const swagger = new SwaggerProvider('test', provider);
 let closing = false;
 process.on('SIGINT', () => {
   if (closing) return;
   closing = true;
   let closed = false;
-  provider.close().then(() => closed = true).catch(e => {
+  swagger.unPublish().then(() => provider.close()).then(() => closed = true).catch(e => {
     console.error(e);
     closed = true;
   });
@@ -49,7 +50,17 @@ provider.on('data', async (ctx: ProviderContext, chunk: ProviderChunk) => {
 provider.addService(CUSTOM_SERVICE, {
   interface: 'com.mifa.test',
   version: '1.0.0',
-  methods: ['hello']
+  methods: ['hello'],
+  parameters: {
+    hello: [
+      {
+        $class: 'java.util.integer',
+        $schema: {
+          type: 'integer'
+        }
+      }
+    ]
+  }
 });
 
-provider.listen().then(() => console.log('service published')).catch(e => console.error(e));
+provider.listen().then(() => swagger.publish()).then(() => console.log('service published')).catch(e => console.error(e));

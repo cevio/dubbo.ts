@@ -6,6 +6,8 @@ import Consumer from './consumer';
 import ConsumerInvoker from './consumer/invoker';
 import ConsumerChannel from './consumer/channel';
 import Registry from './registry';
+import SwaggerProvider from './swagger/provider';
+import SwaggerConsumer from './swagger/consumer';
 export * from './utils';
 
 export {
@@ -17,4 +19,6 @@ export {
   Consumer,
   ConsumerInvoker,
   ConsumerChannel,
+  SwaggerProvider,
+  SwaggerConsumer,
 }

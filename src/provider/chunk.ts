@@ -1,5 +1,5 @@
 import Provider from './index';
-import { ProviderServiceChunkInitOptions, getProviderServiceChunkId, localhost, CREATE_MODES } from '../utils';
+import { ProviderServiceChunkInitOptions, getProviderServiceChunkId, localhost, CREATE_MODES, ProviderServiceChunkMethodParametersOptions } from '../utils';
 import * as url from 'url';
 
 export default class ServiceChunk<T = any> {
@@ -13,6 +13,8 @@ export default class ServiceChunk<T = any> {
   public readonly interfaceretries: number;
   public readonly interfacetimout: number;
   public readonly interfacetarget: T;
+  public readonly interfacemethodparameters: ProviderServiceChunkMethodParametersOptions;
+  public readonly interfacedescription: string;
   private zooKeeperRegisterPath: string;
   constructor(provider: Provider, options: ProviderServiceChunkInitOptions) {
     this.provider = provider;
@@ -24,6 +26,8 @@ export default class ServiceChunk<T = any> {
     this.interfacedelay = options.delay === undefined ? -1 : options.delay;
     this.interfaceretries = options.retries || 2;
     this.interfacetimout = options.timeout || 3000;
+    this.interfacemethodparameters = options.parameters;
+    this.interfacedescription = options.description;
   }
 
   get id() {

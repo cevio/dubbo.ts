@@ -14,7 +14,7 @@ export default class Provider extends EventEmitter {
     readonly registry: Registry;
     readonly heartbeat: number;
     readonly heartbeat_timeout: number;
-    private readonly storage;
+    readonly storage: Map<string, Chunk>;
     private connections;
     constructor(options: ProviderInitOptions);
     error(method: string, message: string): Error;

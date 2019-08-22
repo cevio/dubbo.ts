@@ -61,6 +61,20 @@ export type Logger = {
   warn(...args: any[]): void;
 }
 
+export type SwaggerBase64DataType = {
+  description?: string, // 该接口的描述
+  group?: string, // 组名 如果没有组，请使用字符串`-`
+  version?: string, // 版本名 如果没有版本，请使用字符串 `0.0.0`
+  methods: ProviderServiceChunkMethodParametersOptions;
+}
+
+export type ProviderServiceChunkMethodParametersOptions = {
+  [name: string]: {
+    $class: string,
+    $schema: any,
+  }[]
+}
+
 export type ProviderServiceChunkInitOptions = {
   interface: string,
   revision?: string,
@@ -70,6 +84,8 @@ export type ProviderServiceChunkInitOptions = {
   delay?: number,
   retries?: number,
   timeout?: number,
+  description?: string,
+  parameters?: ProviderServiceChunkMethodParametersOptions,
 }
 
 export type ConsumerServiceInitOptions = {

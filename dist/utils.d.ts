@@ -53,6 +53,18 @@ export declare type Logger = {
     fatal?(...args: any[]): void;
     warn(...args: any[]): void;
 };
+export declare type SwaggerBase64DataType = {
+    description?: string;
+    group?: string;
+    version?: string;
+    methods: ProviderServiceChunkMethodParametersOptions;
+};
+export declare type ProviderServiceChunkMethodParametersOptions = {
+    [name: string]: {
+        $class: string;
+        $schema: any;
+    }[];
+};
 export declare type ProviderServiceChunkInitOptions = {
     interface: string;
     revision?: string;
@@ -62,6 +74,8 @@ export declare type ProviderServiceChunkInitOptions = {
     delay?: number;
     retries?: number;
     timeout?: number;
+    description?: string;
+    parameters?: ProviderServiceChunkMethodParametersOptions;
 };
 export declare type ConsumerServiceInitOptions = {
     application: string;

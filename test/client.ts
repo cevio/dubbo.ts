@@ -1,4 +1,4 @@
-import { Registry, Consumer } from '../src';
+import { Registry, Consumer, SwaggerConsumer } from '../src';
 import * as http from 'http';
 const java = require('js-to-java');
 
@@ -12,6 +12,7 @@ const consumer = new Consumer({
   pid: process.pid,
   registry: registry,
 });
+const swagger = new SwaggerConsumer('test', registry);
 let closing = false;
 process.on('SIGINT', () => {
   if (closing) return;
@@ -32,20 +33,20 @@ process.on('SIGINT', () => {
 consumer.listen().then(() => new Promise((resolve) => {
   http.createServer((req, res) => {
     (async () => {
-      const invoker = await consumer.get('com.mifa.stib.service.ProviderService');
-      return await invoker.invoke('testRpc', [java.combine('com.mifa.stib.common.RpcData', {
-        data: {"name":"gxh","age":"18","word":""},
-        headers: {
-          appName: 'dist',
-          platform: 1,
-          equipment: 1,
-          trace: 'dsafa-dsf-dsaf-sda-f-sa'
-        },
-        user: {
-          id: 1
-        },
-      }
-    )]);
+      // const invoker = await consumer.get('com.mifa.stib.service.ProviderService');
+      // return await invoker.invoke('testRpc', [java.combine('com.mifa.stib.common.RpcData', {
+      //   data: {"name":"gxh","age":"18","word":""},
+      //   headers: {
+      //     appName: 'dist',
+      //     platform: 1,
+      //     equipment: 1,
+      //     trace: 'dsafa-dsf-dsaf-sda-f-sa'
+      //   },
+      //   user: {
+      //     id: 1
+      //   },
+      // })]);
+      return swagger.get();
     })().then((data: any) => res.end(JSON.stringify(data))).catch(e => {
       res.statusCode = 500;
       res.end(e.stack);
