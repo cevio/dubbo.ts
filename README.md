@@ -1,14 +1,16 @@
 # dubbo.ts
 
-Dubbo官网 [http://dubbo.apache.org](http://dubbo.apache.org)，它主要解决java服务的RPC通信问题，而`dubbo.ts`主要参考Dubbo理念，重写在NODEJS端的dubbo的rpc通信。它提供一整套完整的包括从服务端到客户端的解决方案。
+Dubbo官网 [http://dubbo.apache.org](http://dubbo.apache.org)，它主要解决java服务的RPC通信问题，而`dubbo.ts`主要参考Dubbo理念，重写NODEJS端的dubbo的rpc通信。它提供一整套完整的包括从服务端到客户端的解决方案。
 
 ![dubbo](http://dubbo.apache.org/img/architecture.png)
 
-作者参考了现有市面上的所有基于nodejs的dubbo框架，发现这些框架都只实现了客户端调用服务端的解决方案，而没有实现在nodejs上如何启动dubbo的RPC通讯的解决方案。`dubbo.ts`应运而生，作者参考了大量java的源码，相似度接近90%，对于一般企业使用dubbo的rpc通讯绰绰有余。
+作者参考了现有市面上的所有基于nodejs的dubbo框架，发现这些框架都只实现了客户端调用服务端的解决方案，而没有实现在nodejs上如何启动dubbo的RPC通讯的解决方案。在研究java源码的同时，将其思想迁移到nodejs上，以便nodejs可以直接通过zk注册后给java服务提供微服务的rpc调用。
 
 > `dubbo.ts` 采用 `typescript` 编写。
 
-如何使用到实际项目架构中，可以参考这个库的实现 [@nelts/dubbo](https://github.com/nelts/dubbo/blob/master/src/index.ts#L103)，它将duubo.ts通过AOP模型，显得更加直观，也更加贴近JAVA的注解模式。可以来看一段代码：
+如何使用到实际项目架构中，可以参考这个库的实现 [@nelts/dubbo](https://github.com/nelts/dubbo/blob/master/src/index.ts#L103)，它将duubo.ts通过AOP模型的设计，使其显得更加直观，也更加贴近JAVA的注解模式。可以来看一段代码：
+
+> 注意： `dubbo.ts` 没有提供如下的注解，这里仅仅展示一个基于`@nelts/dubbo`设计的注解模型。
 
 ```ts
 import { provide, inject } from 'injection';
@@ -321,7 +323,15 @@ await swagger.publish(); // 发布
 await swagger.unPublish(); // 卸载
 ```
 
-在具体微服务的service上，我们可以这样写
+使用`SwaggerConsumer`调用分布式swgger后得到的数据。
+
+```ts
+import { SwaggerConsumer, Registry } from 'dubbo.ts';
+const swgger = new SwaggerConsumer('subject name', registry as Registry);
+const resultTree = await swgger.get();
+```
+
+我们来看一个基于`@nelts/dubbo`的实例，在具体微服务的service上，我们可以这样写
 
 ```ts
 import { provide, inject } from 'injection';
@@ -409,6 +419,8 @@ export default class UserService {
   }
 }
 ```
+
+> 这种Swagger模式称为分布式swagger，它的优势在于，如果使用同一个zk注册中心，那么无论服务部署在那台服务器，都可以将swagger聚合在一起处理。
 
 # License
 

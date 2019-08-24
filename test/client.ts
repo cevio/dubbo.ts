@@ -33,20 +33,20 @@ process.on('SIGINT', () => {
 consumer.listen().then(() => new Promise((resolve) => {
   http.createServer((req, res) => {
     (async () => {
-      // const invoker = await consumer.get('com.mifa.stib.service.ProviderService');
-      // return await invoker.invoke('testRpc', [java.combine('com.mifa.stib.common.RpcData', {
-      //   data: {"name":"gxh","age":"18","word":""},
-      //   headers: {
-      //     appName: 'dist',
-      //     platform: 1,
-      //     equipment: 1,
-      //     trace: 'dsafa-dsf-dsaf-sda-f-sa'
-      //   },
-      //   user: {
-      //     id: 1
-      //   },
-      // })]);
-      return swagger.get();
+      const invoker = await consumer.get('com.mifa.stib.service.ProviderService');
+      return await invoker.invoke('testRpc', [java.combine('com.mifa.stib.common.RpcData', {
+        data: {"name":"gxh","age":"18","word":""},
+        headers: {
+          appName: 'dist',
+          platform: 1,
+          equipment: 1,
+          trace: 'dsafa-dsf-dsaf-sda-f-sa'
+        },
+        user: {
+          id: 1
+        },
+      })]);
+      // return swagger.get();
     })().then((data: any) => {
       // res.setDefaultEncoding('utf8');
       res.end(JSON.stringify(data));
