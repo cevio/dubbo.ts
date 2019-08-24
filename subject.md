@@ -308,7 +308,7 @@ export default class UserService {
   }
 
   @rpc.method
-  @rpc.summay('��获取某个用户详细信息')
+  @rpc.summay('获取某个用户详细信息')
   @rpc.parameters(RpcRequestParameter({
     type: 'object',
     properties: {
