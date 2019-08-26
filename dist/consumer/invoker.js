@@ -167,6 +167,7 @@ class Invoker {
             return result;
         if (count < retries)
             return await this.manyRetry(method, args, providers, usedChannels, count + 1);
+        return result;
     }
     async oneRetry(method, args, channel, count) {
         const retries = channel.retries;
@@ -175,6 +176,7 @@ class Invoker {
             return result;
         if (count < retries)
             return await this.oneRetry(method, args, channel, count + 1);
+        return result;
     }
     resolveInvokeResult(result) {
         if (result.code !== 200)
