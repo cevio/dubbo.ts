@@ -13,6 +13,9 @@ class Channel {
         this._rpc_callbacks = new Map();
         this.invoker = invoker;
     }
+    get host() {
+        return this.service.host;
+    }
     get href() {
         return this.service.href;
     }
@@ -149,6 +152,7 @@ class Channel {
     async uninstall() {
         this.close();
         this.alive = false;
+        this.invoker.remove(this);
     }
     async setup(one) {
         this.service = one;

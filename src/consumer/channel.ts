@@ -20,6 +20,10 @@ export default class Channel {
     this.invoker = invoker;
   }
 
+  get host() {
+    return this.service.host;
+  }
+
   get href() {
     return this.service.href;
   }
@@ -163,6 +167,7 @@ export default class Channel {
   async uninstall() {
     this.close();
     this.alive = false;
+    this.invoker.remove(this);
   }
 
   async setup(one: url.UrlWithParsedQuery) {

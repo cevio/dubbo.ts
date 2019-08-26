@@ -14,6 +14,7 @@ export default class Channel {
     private _rpc_callback_id;
     private _rpc_callbacks;
     constructor(invoker: Invoker);
+    readonly host: string;
     readonly href: string;
     readonly retries: number;
     readonly timeout: number;

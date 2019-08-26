@@ -11,6 +11,7 @@ export default class Invoker {
     private channels;
     constructor(consumer: Consumer, interfacename: string, interfaceversion: string, interfacegroup: string);
     close(): Promise<void>;
+    remove(channel: Channel): void;
     register(): Promise<this>;
     unRegister(): Promise<unknown>;
     subscribe(id: string): Promise<number>;

@@ -14,4 +14,5 @@ export default class Consumer {
     get(interfacename: string, version?: string, group?: string): Promise<Invoker>;
     close(): Promise<void>;
     listen(): Promise<void>;
+    remove(invoker: Invoker): void;
 }

@@ -40,5 +40,10 @@ class Consumer {
         if (!this.registry.connected)
             await this.registry.connect();
     }
+    remove(invoker) {
+        const id = utils_1.getProviderServiceChunkId(invoker.interfacename, invoker.interfacegroup, invoker.interfaceversion);
+        if (this.storage.has(id))
+            this.storage.delete(id);
+    }
 }
 exports.default = Consumer;

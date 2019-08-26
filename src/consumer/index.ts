@@ -48,4 +48,9 @@ export default class Consumer {
   async listen() {
     if (!this.registry.connected) await this.registry.connect();
   }
+
+  remove(invoker: Invoker) {
+    const id = getProviderServiceChunkId(invoker.interfacename, invoker.interfacegroup, invoker.interfaceversion);
+    if (this.storage.has(id)) this.storage.delete(id);
+  }
 }
