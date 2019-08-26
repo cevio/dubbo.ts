@@ -181,6 +181,7 @@ export default class Invoker {
     const result = await _channel.invoke(method, args);
     if (result.code !== 408) return result;
     if (count < retries) return await this.manyRetry(method, args, providers, usedChannels, count + 1);
+    return result;
   }
 
   private async oneRetry(method: string, args: any[], channel: Channel, count: number): Promise<RPC_CALLBACK_ARGS> {
@@ -188,6 +189,7 @@ export default class Invoker {
     const result = await channel.invoke(method, args);
     if (result.code !== 408) return result;
     if (count < retries) return await this.oneRetry(method, args, channel, count + 1);
+    return result;
   }
 
   private resolveInvokeResult(result: RPC_CALLBACK_ARGS) {
