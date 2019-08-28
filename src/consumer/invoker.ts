@@ -28,10 +28,13 @@ export default class Invoker {
     this.unRegister();
   }
 
-  remove(channel: Channel) {
+  async remove(channel: Channel) {
     const host = channel.host;
     if (this.channels.has(host)) this.channels.delete(host);
-    if (this.channels.size === 0) this.consumer.remove(this);
+    if (this.channels.size === 0) {
+      this.consumer.remove(this);
+      await this.unRegister();
+    }
   }
 
   async register() {

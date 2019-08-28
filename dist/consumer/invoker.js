@@ -18,12 +18,14 @@ class Invoker {
         }
         this.unRegister();
     }
-    remove(channel) {
+    async remove(channel) {
         const host = channel.host;
         if (this.channels.has(host))
             this.channels.delete(host);
-        if (this.channels.size === 0)
+        if (this.channels.size === 0) {
             this.consumer.remove(this);
+            await this.unRegister();
+        }
     }
     async register() {
         const obj = {

@@ -152,7 +152,7 @@ class Channel {
     async uninstall() {
         this.close();
         this.alive = false;
-        this.invoker.remove(this);
+        await this.invoker.remove(this);
     }
     async setup(one) {
         this.service = one;
