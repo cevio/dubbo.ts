@@ -1,7 +1,8 @@
 /// <reference types="node" />
 import Connection from './connection';
+import { EventEmitter } from '@nelts/utils';
 import { PROVIDER_CONTEXT_STATUS } from '../utils';
-export default class Context {
+export default class Context extends EventEmitter {
     private data;
     private conn;
     private decoded;

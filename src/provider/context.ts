@@ -1,5 +1,6 @@
 import Connection from './connection';
 import * as compare from 'compare-versions';
+import { EventEmitter } from '@nelts/utils';
 import { 
   DUBBO_HEADER_LENGTH, 
   MAGIC_HIGH, 
@@ -19,7 +20,7 @@ import {
 } from '../utils';
 const hassin = require('hessian.js');
 
-export default class Context {
+export default class Context extends EventEmitter {
   private data: Buffer;
   private conn: Connection;
   private decoded: boolean = false;
@@ -48,6 +49,7 @@ export default class Context {
     },
   };
   constructor(conn: Connection, buf: Buffer) {
+    super();
     this.conn = conn;
     this.data = buf;
   }
