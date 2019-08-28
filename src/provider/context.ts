@@ -54,6 +54,10 @@ export default class Context extends EventEmitter {
     this.data = buf;
   }
 
+  get logger() {
+    return this.conn.provider.logger;
+  }
+
   decode() {
     if (this.decoded) return;
     let buf = Buffer.concat([Buffer.alloc(0), this.data]);

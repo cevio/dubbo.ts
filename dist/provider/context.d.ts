@@ -28,6 +28,7 @@ export default class Context extends EventEmitter {
         };
     };
     constructor(conn: Connection, buf: Buffer);
+    readonly logger: import("../utils").Logger;
     decode(): Promise<void>;
     encode(): Buffer;
     setRequestId(header: Buffer): void;

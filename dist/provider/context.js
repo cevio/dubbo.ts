@@ -12,6 +12,9 @@ class Context extends utils_1.EventEmitter {
         this.conn = conn;
         this.data = buf;
     }
+    get logger() {
+        return this.conn.provider.logger;
+    }
     decode() {
         if (this.decoded)
             return;
