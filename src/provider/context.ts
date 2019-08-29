@@ -20,7 +20,12 @@ import {
 } from '../utils';
 const hassin = require('hessian.js');
 
+type StackCallback = () => Promise<any>;
+type StackStatus = 0 | 1 | 2;
+
 export default class Context extends EventEmitter {
+  private _stacks: StackCallback[] = [];
+  private _stackStatus: StackStatus = 0;
   private data: Buffer;
   private conn: Connection;
   private decoded: boolean = false;
@@ -56,6 +61,26 @@ export default class Context extends EventEmitter {
 
   get logger() {
     return this.conn.provider.logger;
+  }
+
+  stash(fn: StackCallback) {
+    this._stacks.push(fn);
+    return this;
+  }
+
+  async commit() {
+    if (this._stackStatus !== 0) return;
+    await this.sync('ContextResolve');
+    this._stackStatus = 2;
+  }
+
+  async rollback(e: Error) {
+    if (this._stackStatus !== 0) return;
+    const stacks = this._stacks.slice(0);
+    let i = stacks.length;
+    while (i--) await stacks[i]();
+    await this.sync('ContextReject', e);
+    this._stackStatus = 1;
   }
 
   decode() {

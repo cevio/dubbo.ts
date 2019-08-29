@@ -2,7 +2,10 @@
 import Connection from './connection';
 import { EventEmitter } from '@nelts/utils';
 import { PROVIDER_CONTEXT_STATUS } from '../utils';
+declare type StackCallback = () => Promise<any>;
 export default class Context extends EventEmitter {
+    private _stacks;
+    private _stackStatus;
     private data;
     private conn;
     private decoded;
@@ -29,6 +32,9 @@ export default class Context extends EventEmitter {
     };
     constructor(conn: Connection, buf: Buffer);
     readonly logger: import("../utils").Logger;
+    stash(fn: StackCallback): this;
+    commit(): Promise<void>;
+    rollback(e: Error): Promise<void>;
     decode(): Promise<void>;
     encode(): Buffer;
     setRequestId(header: Buffer): void;
@@ -36,3 +42,4 @@ export default class Context extends EventEmitter {
     private isSupportAttachments;
     private encodeBody;
 }
+export {};

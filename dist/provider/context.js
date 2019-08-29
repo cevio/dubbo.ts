@@ -7,6 +7,8 @@ const hassin = require('hessian.js');
 class Context extends utils_1.EventEmitter {
     constructor(conn, buf) {
         super();
+        this._stacks = [];
+        this._stackStatus = 0;
         this.decoded = false;
         this.attachments = {};
         this.conn = conn;
@@ -14,6 +16,26 @@ class Context extends utils_1.EventEmitter {
     }
     get logger() {
         return this.conn.provider.logger;
+    }
+    stash(fn) {
+        this._stacks.push(fn);
+        return this;
+    }
+    async commit() {
+        if (this._stackStatus !== 0)
+            return;
+        await this.sync('ContextResolve');
+        this._stackStatus = 2;
+    }
+    async rollback(e) {
+        if (this._stackStatus !== 0)
+            return;
+        const stacks = this._stacks.slice(0);
+        let i = stacks.length;
+        while (i--)
+            await stacks[i]();
+        await this.sync('ContextReject', e);
+        this._stackStatus = 1;
     }
     decode() {
         if (this.decoded)
