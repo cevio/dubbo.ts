@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const net = require("net");
 const encode_1 = require("./encode");
 const utils_1 = require("../utils");
-const decoder_1 = require("./decoder");
+const decode_1 = require("./decode");
 class Channel {
     constructor(invoker) {
         this.busies = 0;
@@ -11,7 +11,7 @@ class Channel {
         this._lastwrite_timestamp = Date.now();
         this._rpc_callback_id = 0;
         this._rpc_callbacks = new Map();
-        this.decoder = new decoder_1.default();
+        this.decoder = new decode_1.default();
         this.invoker = invoker;
     }
     get host() {

@@ -4,7 +4,7 @@ import Invoker from './invoker';
 import encode from './encode';
 import { heartBeatEncode, RPC_CALLBACK_ARGS, RPC_CALLBACK } from '../utils';
 // import decode from './decode';
-import Decoder from './decoder';
+import Decoder from './decode';
 
 export default class Channel {
   public readonly invoker: Invoker;
