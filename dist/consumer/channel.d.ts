@@ -13,6 +13,7 @@ export default class Channel {
     private _heartbeat_timer;
     private _rpc_callback_id;
     private _rpc_callbacks;
+    private readonly decoder;
     constructor(invoker: Invoker);
     readonly host: string;
     readonly href: string;

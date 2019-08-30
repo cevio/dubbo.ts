@@ -3,7 +3,8 @@ import * as net from 'net';
 import Invoker from './invoker';
 import encode from './encode';
 import { heartBeatEncode, RPC_CALLBACK_ARGS, RPC_CALLBACK } from '../utils';
-import decode from './decode';
+// import decode from './decode';
+import Decoder from './decoder';
 
 export default class Channel {
   public readonly invoker: Invoker;
@@ -16,6 +17,7 @@ export default class Channel {
   private _heartbeat_timer: NodeJS.Timer;
   private _rpc_callback_id = 0;
   private _rpc_callbacks: Map<number, RPC_CALLBACK> = new Map();
+  private readonly decoder = new Decoder();
   constructor(invoker: Invoker) {
     this.invoker = invoker;
   }
@@ -137,7 +139,7 @@ export default class Channel {
 
   onMessage(buf: Buffer) {
     this._lastread_timestamp = Date.now();
-    decode(this, buf, ({ err, res, requestId, attachments, }) => {
+    this.decoder.receive(this, buf, ({ err, res, requestId, attachments, }) => {
       const fn = this._rpc_callbacks.has(requestId) ? this._rpc_callbacks.get(requestId) : null;
       if (fn) {
         if (err) return fn({
