@@ -95,6 +95,13 @@ export default class Invoker {
     const result: url.UrlWithParsedQuery[] = [];
     list.forEach(item => {
       const URI = url.parse(decodeURIComponent(item), true);
+      const matchInterfaceName = URI.query.interface === this.interfacename;
+      const matchInterfaceVersion = URI.query.version === this.interfaceversion;
+      const matchInterfaceGroup = (URI.query['default.grouop'] || '') === (this.interfacegroup === '-' ? '': this.interfacegroup);
+      this.consumer.logger.debug('------------', URI.host, '------------');
+      this.consumer.logger.debug('Match name:', matchInterfaceName, URI.query.interface, this.interfacename);
+      this.consumer.logger.debug('Match version:', matchInterfaceVersion, URI.query.version, this.interfaceversion);
+      this.consumer.logger.debug('Match group:', matchInterfaceGroup, (URI.query['default.grouop'] || ''), (this.interfacegroup === '-' ? '': this.interfacegroup));
       if (
         URI.query.interface === this.interfacename && 
         URI.query.version === this.interfaceversion && 
