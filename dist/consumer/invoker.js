@@ -71,7 +71,7 @@ class Invoker {
         switch (event.getName()) {
             case 'NODE_CREATED':
             case 'NODE_DELETED':
-            case 'NODE_DATA_CHANGED': return;
+            case 'NODE_DATA_CHANGED': return this.consumer.logger.debug('[DUBBO ZOOKEEPER NOTIFY]', event.getName(), event);
             case 'NODE_CHILDREN_CHANGED': return await this.setupChannels(await this.getChildrenListFromZooKeeper(id));
         }
     }
@@ -89,9 +89,7 @@ class Invoker {
             this.consumer.logger.debug('Match name:', matchInterfaceName, URI.query.interface, this.interfacename);
             this.consumer.logger.debug('Match version:', matchInterfaceVersion, URI.query.version, this.interfaceversion);
             this.consumer.logger.debug('Match group:', matchInterfaceGroup, (URI.query['default.grouop'] || ''), (this.interfacegroup === '-' ? '' : this.interfacegroup));
-            if (URI.query.interface === this.interfacename &&
-                URI.query.version === this.interfaceversion &&
-                (URI.query['default.grouop'] || '') === (this.interfacegroup === '-' ? '' : this.interfacegroup))
+            if (matchInterfaceName && matchInterfaceVersion && matchInterfaceGroup)
                 result.push(URI);
         });
         this.consumer.logger.debug('[Consumer Registry]', 'find vaild service:', result.length);
@@ -109,21 +107,21 @@ class Invoker {
         adds.forEach((one) => {
             const channel = new channel_1.default(this);
             const target = current.get(one);
-            this.consumer.logger.debug('  +', target.href);
+            this.consumer.logger.debug('[DUBBO INVOKER ADDONE]', target.href);
             task.push(channel.install(target).then(() => this.channels.set(target.host, channel)));
         });
         removes.forEach((one) => {
             if (this.channels.has(one)) {
                 const channel = this.channels.get(one);
                 this.channels.delete(one);
-                this.consumer.logger.debug('  -', channel.href);
+                this.consumer.logger.debug('[DUBBO INVOKER REMOVE]', channel.href);
                 task.push(channel.uninstall());
             }
         });
         commons.forEach((one) => {
             if (this.channels.has(one)) {
                 const target = this.channels.get(one);
-                this.consumer.logger.debug('  *', target.href);
+                this.consumer.logger.debug('[DUBBO INVOKER MODIFY]', target.href);
                 task.push(target.setup(current.get(one)));
             }
         });

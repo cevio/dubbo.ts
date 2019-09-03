@@ -96,7 +96,7 @@ class Channel {
         this.client.on('data', (buf) => this.onMessage(buf));
         this.client.on('error', err => this.invoker.consumer.logger.fatal(err));
         this.client.on('close', () => {
-            this.invoker.consumer.logger.debug('  %', this.href);
+            this.invoker.consumer.logger.debug('[DUBBO CHANNEL CLOSE]', this.href);
             return this.uninstall();
         });
     }
