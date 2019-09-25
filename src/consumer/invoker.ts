@@ -70,9 +70,9 @@ export default class Invoker {
   }
 
   unRegister() {
-    if (this.zooKeeperRegisterPath) {
-      return this.consumer.registry.remove(this.zooKeeperRegisterPath);
-    }
+    // if (this.zooKeeperRegisterPath) {
+    //   return this.consumer.registry.remove(this.zooKeeperRegisterPath);
+    // }
   }
 
   // 订阅服务

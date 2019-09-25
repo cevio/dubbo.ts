@@ -60,9 +60,6 @@ class Invoker {
         return this;
     }
     unRegister() {
-        if (this.zooKeeperRegisterPath) {
-            return this.consumer.registry.remove(this.zooKeeperRegisterPath);
-        }
     }
     async subscribe(id) {
         return await this.setupChannels(await this.getChildrenListFromZooKeeper(id));
