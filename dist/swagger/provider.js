@@ -27,11 +27,12 @@ class SwaggerProvider {
         await Promise.all(this.publishedNodes.map(node => this.provider.registry.remove(node)));
     }
     format(chunk) {
-        const res = { methods: [] };
+        const res = { methods: [], host: null };
         res.description = chunk.interfacedescription;
         res.group = chunk.interfacegroup;
         res.version = chunk.interfaceversion;
         res.methods = chunk.interfacemethodparameters;
+        res.host = chunk.host;
         return encodeURIComponent(Buffer.from(JSON.stringify(res), 'utf8').toString('base64'));
     }
 }

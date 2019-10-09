@@ -65,7 +65,8 @@ export type SwaggerBase64DataType = {
   description?: string, // 该接口的描述
   group?: string, // 组名 如果没有组，请使用字符串`-`
   version?: string, // 版本名 如果没有版本，请使用字符串 `0.0.0`
-  methods: ProviderServiceChunkMethodParametersOptions[];
+  methods: ProviderServiceChunkMethodParametersOptions[],
+  host: string,
 }
 
 export type ProviderServiceChunkMethodParametersSchema = {

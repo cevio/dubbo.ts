@@ -34,6 +34,10 @@ export default class ServiceChunk<T = any> {
     return getProviderServiceChunkId(this.interfacename, this.interfacegroup, this.interfaceversion);
   }
 
+  get host() {
+    return `${localhost}:${this.provider.port}`;
+  }
+
   setValue(value: T) {
     if (this.interfacetarget !== undefined) throw this.provider.error('Chunk.set', this.id + ' has already setted value.');
     Object.defineProperty(this, 'interfacetarget', { value });
@@ -43,7 +47,7 @@ export default class ServiceChunk<T = any> {
     const obj = {
       protocol: "dubbo",
       slashes: true,
-      host: `${localhost}:${this.provider.port}/${this.interfacename}`,
+      host: `${this.host}/${this.interfacename}`,
       query: {
         anyhost: true,
         application: this.provider.application,

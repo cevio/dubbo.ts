@@ -33,11 +33,12 @@ export default class SwaggerProvider {
   }
 
   private format(chunk: ProviderChunk) {
-    const res: SwaggerBase64DataType = { methods: [] };
+    const res: SwaggerBase64DataType = { methods: [], host: null };
     res.description = chunk.interfacedescription;
     res.group = chunk.interfacegroup;
     res.version = chunk.interfaceversion;
     res.methods = chunk.interfacemethodparameters;
+    res.host = chunk.host;
     return encodeURIComponent(Buffer.from(JSON.stringify(res), 'utf8').toString('base64'));
   }
 }

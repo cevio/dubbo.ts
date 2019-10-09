@@ -16,6 +16,7 @@ export default class ServiceChunk<T = any> {
     private zooKeeperRegisterPath;
     constructor(provider: Provider, options: ProviderServiceChunkInitOptions);
     readonly id: string;
+    readonly host: string;
     setValue(value: T): void;
     register(): Promise<this>;
     unRegister(): Promise<unknown>;
