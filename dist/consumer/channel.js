@@ -37,7 +37,6 @@ class Channel {
         let id = this._rpc_callback_id++;
         if (id === Number.MAX_SAFE_INTEGER)
             id = 1;
-        this.invoker.consumer.logger.debug('[Consumer Invoker]', this.service.host);
         return new Promise(resolve => {
             const timer = setTimeout(() => {
                 this._rpc_callbacks.delete(id);

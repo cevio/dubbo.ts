@@ -20,7 +20,7 @@ class SwaggerProvider {
             const node_path = this.subjectRootPath + '/' + chunk.interfacename + '/exports/' + this.format(chunk);
             await this.provider.registry.create(node_path, utils_1.CREATE_MODES.EPHEMERAL);
             this.publishedNodes.push(node_path);
-            this.logger.info('[Swagger Register]', id, node_path);
+            this.logger.info('[Swagger Register]', id);
         }
     }
     async unPublish() {
