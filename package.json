@@ -10,6 +10,7 @@
   "scripts": {
     "server": "ts-node test/server.ts",
     "client": "ts-node test/client.ts",
+    "http-client": "ts-node test/http-client.ts",
     "build": "rm -rf dist/ && tsc -d"
   },
   "files": [

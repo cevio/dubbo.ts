@@ -10,3 +10,5 @@ perf
 npm-debug.log
 .vscode
 tsconfig.tsbuildinfo
+report.*
+package-lock.json

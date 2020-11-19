@@ -1,73 +1,43 @@
-import { Registry, Provider, ProviderContext, PROVIDER_CONTEXT_STATUS, ProviderChunk, SwaggerProvider } from '../src';
+import { Registry } from '../lib/Registry/zookeeper';
+import { Provider } from '../lib/Provider';
+import { TDecodeServerSchema } from '../lib/Provider/decode';
+import { Connection } from '../lib/Provider/connection';
+import { TDecodeRequestSchema, TDecodeResponseSchema } from '../lib/protocol/decode';
 
-class CUSTOM_SERVICE {
-  hello(a: number, b: number) {
-    return a + b;
-  }
-}
-
-const registry = new Registry({
-  host: '192.168.2.150:2181',
-});
-
+// const registry = new Registry();
 const provider = new Provider({
-  application: 'test',
-  dubbo_version: '2.0.2',
-  port: 8080,
-  pid: process.pid,
-  registry,
-  heartbeat: 60000,
-});
-const swagger = new SwaggerProvider('test', provider);
-let closing = false;
-process.on('SIGINT', () => {
-  if (closing) return;
-  closing = true;
-  let closed = false;
-  swagger.unPublish().then(() => provider.close()).then(() => closed = true).catch(e => {
-    console.error(e);
-    closed = true;
-  });
-  setInterval(() => {
-    if (closed) {
-      console.log('closed')
-      process.exit(0);
-    }
-  }, 300);
+  // registry,
+  application: 'server',
+  port: 8081,
+  // heartbeat: 3000,
+  version: '2.0.2'
 });
 
-provider.on('data', async (ctx: ProviderContext, chunk: ProviderChunk) => {
-  // 反序列化数据
-  const req = ctx.req;
-  // 如果chunk.interfacetarget是一个class service
-  // 那么我们可以这样写
-  const app = new chunk.interfacetarget();
-  const result = await app[req.method](...req.parameters);
-  ctx.body = result;
-  ctx.status = PROVIDER_CONTEXT_STATUS.OK;
-});
-
-provider.addService(CUSTOM_SERVICE, {
-  interface: 'com.mifa.test',
+provider.addService({
+  interface: 'com.mifa.stib.service.ProviderService',
+  revision: '1.0.0',
   version: '1.0.0',
-  methods: ['hello'],
-  parameters: [
-    {
-      name: 'hello',
-      summary: '何洛洛我',
-      input: [
-        {
-          $class: 'java.util.integer',
-          $schema: {
-            type: 'integer'
-          }
-        }
-      ],
-      output: {
-        type: 'integer'
+  methods: ['use'],
+}).bind({
+  use() {
+    console.log('in use');
+  }
+});
+
+provider.on('listening', () => console.log('listening......'));
+provider.on('error', e => console.error(e));
+provider.on('close', () => console.log('closed'));
+provider.on('publish', url => console.log('  + publish: ' + url));
+provider.on('unpublish', url => console.log('\n  - unpublish: ' + url));
+provider.on('data', (schema: TDecodeRequestSchema, connection: Connection) => {
+  connection.execute(schema, async (STATUS) => {
+    return {
+      status: STATUS.OK,
+      data: {
+        value: 'ok'
       }
     }
-  ]
+  })
 });
 
-provider.listen().then(() => swagger.publish()).then(() => console.log('service published')).catch(e => console.error(e));
+provider.launch().then(() => console.log('started')).catch(e => provider.close());

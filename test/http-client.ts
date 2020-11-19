@@ -1,3 +1,4 @@
+import { createServer } from 'http';
 import { Consumer } from '../lib/Consumer';
 import { Attachment } from '../lib/protocol/attachment';
 
@@ -10,8 +11,26 @@ const consumer = new Consumer({
 
 consumer.launch();
 
-setTimeout(async () => {
-  console.log('sending...');
+const server = createServer((req, res) => {
+  console.log('[' + Date.now() + ']', '- url:', req.url);
+  if (req.url === '/favicon.ico') {
+    res.statusCode = 200;
+    return res.end();
+  }
+  run().then(data => {
+    res.statusCode = 200;
+    res.end(JSON.stringify(data));
+  }).catch(e => {
+    res.statusCode = 500;
+    res.end(e.message);
+  })
+}).listen(9001, () => {
+  console.log('start at 9001');
+});
+
+server.on('close', () => consumer.close());
+
+async function run() {
   const client = await consumer.connect('127.0.0.1', 8081);
   const method = 'use';
   const args = [java.combine('com.mifa.stib.common.RpcData', {
@@ -27,8 +46,8 @@ setTimeout(async () => {
       },
     }
   )];
-  client.execute(method, args, {
+  return await client.execute(method, args, {
     [Attachment.VERSION_KEY]: '1.0.0',
     [Attachment.INTERFACE_KEY]: 'com.mifa.stib.factory',
-  }).then((data) => console.log('last', data))
-}, 2000);
+  });
+}
