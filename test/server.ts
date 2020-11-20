@@ -1,8 +1,7 @@
 import { Registry } from '../lib/Registry/zookeeper';
 import { Provider } from '../lib/Provider';
-import { TDecodeServerSchema } from '../lib/Provider/decode';
 import { Connection } from '../lib/Provider/connection';
-import { TDecodeRequestSchema, TDecodeResponseSchema } from '../lib/protocol/decode';
+import { TDecodeRequestSchema } from '../lib/protocol/decode';
 
 // const registry = new Registry();
 const provider = new Provider({

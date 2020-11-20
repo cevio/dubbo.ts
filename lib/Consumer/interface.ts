@@ -8,24 +8,3 @@ export interface TConsumerOptions<R extends TRegistry> {
   heartbeat?: number,
   version: string,
 }
-
-export interface TConsumerConnectOptions {
-  group?: string,
-  version?: string,
-}
-
-export type TConsumerEncodeBody = {
-  path?: string,
-  requestId: number,
-  dubboVersion: string,
-  dubboInterface: string,
-  version: string,
-  methodName: string,
-  methodArgs?: any[],
-  group?: string,
-  timeout?: number,
-  application: string,
-  attachments?: {
-    [name: string]: any,
-  }
-}

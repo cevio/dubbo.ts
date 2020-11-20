@@ -14,12 +14,12 @@ export class Connection<R extends TRegistry = any> extends EventEmitter {
     private readonly socket: Socket
   ) {
     super();
-    this.pool = new Pool(buf => this.socket.write(buf));
-    this.socket.on('close', () => {
-      this.close().then(() => this.provider.deleteConnection(this));
-    });
+    this.pool = new Pool(this.provider.options.heartbeat, buf => this.socket.write(buf));
+    this.socket.on('close', () => this.close().then(() => this.provider.deleteConnection(this)));
     this.socket.on('data', buf => this.pool.putReadBuffer(buf));
     this.pool.on('request', (schema: TDecodeRequestSchema) => this.provider.emit('data', schema, this));
+    this.pool.on('heartbeat:timeout', () => this.socket.end());
+    this.pool.startHeartBeat();
   }
 
   public execute<T = any>(
@@ -66,6 +66,7 @@ export class Connection<R extends TRegistry = any> extends EventEmitter {
   }
 
   public async close() {
+    this.pool.close();
     await new Promise(resolve => this.socket.end(resolve));
   }
 }

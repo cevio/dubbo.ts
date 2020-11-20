@@ -24,7 +24,7 @@ export class Client<R extends TRegistry> extends EventEmitter {
   ) {
     super();
     this.id = getClientFinger(host, port);
-    this.pool = new Pool(buf => this.tcp.write(buf));
+    this.pool = new Pool(this.consumer.options.heartbeat, buf => this.tcp.write(buf));
     this.pool.on('response', (data: TDecodeResponseSchema) => {
       const id = data.id;
       if (this._rpc_callbacks.has(id)) {
@@ -33,6 +33,8 @@ export class Client<R extends TRegistry> extends EventEmitter {
         resolve(data.data);
       }
     });
+    this.pool.on('heartbeat:timeout', () => this.reconnect());
+    this.pool.startHeartBeat();
   }
 
   public async connect() {
@@ -63,7 +65,7 @@ export class Client<R extends TRegistry> extends EventEmitter {
 
   public async reconnect() {
     this._rpc_reconnecting = true;
-    this.close();
+    await this.close();
     await this.connect();
     this._rpc_reconnecting = false;
   }
@@ -147,6 +149,7 @@ export class Client<R extends TRegistry> extends EventEmitter {
   }
 
   public async close() {
+    this.pool.close();
     await new Promise((resolve) => this.tcp.end(resolve));
   }
 }
