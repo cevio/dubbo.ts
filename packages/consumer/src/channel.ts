@@ -85,7 +85,7 @@ export class Channel extends EventEmitter {
       const attchment = new Attachment();
       attchment.setMethodName(method);
       attchment.setParameters(args);
-      attchment.setAttachment(Attachment.GROUP_KEYT, group);
+      attchment.setAttachment(Attachment.GROUP_KEY, group);
       attchment.setAttachment(Attachment.VERSION_KEY, version);
       attchment.setAttachment(Attachment.DUBBO_VERSION_KEY, this.consumer.application.version);
       attchment.setAttachment(Attachment.PATH_KEY, name);

@@ -2,7 +2,7 @@ export class Attachment {
   static readonly DUBBO_VERSION_KEY = 'dubbo';
   static readonly PATH_KEY = 'path';
   static readonly VERSION_KEY = 'version';
-  static readonly GROUP_KEYT = 'default.group';
+  static readonly GROUP_KEY = 'default.group';
   static readonly CLUSTER_KEY = 'cluster';
   static readonly METHODS_KEY = 'methods';
   static readonly PID_KEY = 'pid';
@@ -109,7 +109,7 @@ export interface TAttchments extends Record<string, any> {
   [Attachment.INTERFACE_KEY]: string;
   [Attachment.APPLICATION_KEY]?: string;
   [Attachment.TIMESTAMP_KEY]?: number;
-  [Attachment.GROUP_KEYT]?: string;
+  [Attachment.GROUP_KEY]?: string;
   [Attachment.CLUSTER_KEY]?: string;
   [Attachment.METHODS_KEY]?: string;
   [Attachment.MONITOR_KEY]?: string;
