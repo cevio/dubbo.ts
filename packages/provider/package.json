@@ -1,0 +1,26 @@
+{
+  "name": "@dubbo.ts/provider",
+  "version": "1.0.0",
+  "description": "dubbo provider module",
+  "author": "",
+  "homepage": "https://github.com/cevio/dubbo.ts",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "directories": {
+    "lib": "src"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@dubbo.ts/application": "^1.0.0",
+    "@dubbo.ts/protocol": "^1.0.0",
+    "@dubbo.ts/utils": "^1.0.0"
+  }
+}

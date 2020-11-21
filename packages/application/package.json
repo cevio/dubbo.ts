@@ -1,0 +1,21 @@
+{
+  "name": "@dubbo.ts/application",
+  "version": "1.0.0",
+  "description": "dubbo application module",
+  "author": "",
+  "homepage": "https://github.com/cevio/dubbo.ts",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "directories": {
+    "lib": "src"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

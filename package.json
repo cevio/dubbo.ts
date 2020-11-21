@@ -1,51 +1,15 @@
 {
-  "name": "dubbo.ts",
-  "version": "1.0.72",
-  "description": "dubbo for ts",
-  "main": "dist/index.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/cevio/dubbo.ts.git"
-  },
+  "name": "root",
+  "private": true,
   "scripts": {
-    "server": "ts-node test/server.ts",
-    "client": "ts-node test/client.ts",
-    "http-client": "ts-node test/http-client.ts",
-    "build": "rm -rf dist/ && tsc -d"
+    "create": "node scripts/create.js",
+    "test:server": "ts-node packages/provider/test/index.ts",
+    "test:client": "ts-node packages/consumer/test/index.ts"
   },
-  "files": [
-    "dist"
-  ],
-  "keywords": [
-    "dubbo",
-    "typescript",
-    "ts",
-    "registry",
-    "zookeeper",
-    "provider",
-    "consumer",
-    "interface",
-    "client",
-    "swagger"
-  ],
-  "author": "cevio",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/cevio/dubbo.ts/issues"
-  },
-  "homepage": "https://github.com/cevio/dubbo.ts#readme",
   "devDependencies": {
-    "@types/node": "^12.6.8",
-    "js-to-java": "^2.6.1",
-    "typescript": "^3.5.3"
-  },
-  "dependencies": {
-    "@evio/intersect": "^1.0.4",
-    "@nelts/utils": "^1.0.19",
-    "@types/compare-versions": "^3.0.0",
-    "@types/node-zookeeper-client": "^0.2.6",
-    "compare-versions": "^3.5.1",
-    "hessian.js": "^2.9.0",
-    "node-zookeeper-client": "^1.0.0"
+    "inquirer": "^7.3.3",
+    "lerna": "^3.22.1",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.1.2"
   }
 }

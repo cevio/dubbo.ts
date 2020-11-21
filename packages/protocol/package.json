@@ -1,0 +1,25 @@
+{
+  "name": "@dubbo.ts/protocol",
+  "version": "1.0.0",
+  "description": "dubbo protocol module",
+  "author": "",
+  "homepage": "https://github.com/cevio/dubbo.ts",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "directories": {
+    "lib": "src"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "compare-versions": "^3.6.0",
+    "hessian.js": "^2.10.0"
+  }
+}

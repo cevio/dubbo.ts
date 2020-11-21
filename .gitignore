@@ -12,3 +12,5 @@ npm-debug.log
 tsconfig.tsbuildinfo
 report.*
 package-lock.json
+dist
+*.lerna_backup
