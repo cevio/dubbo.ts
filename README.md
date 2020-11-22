@@ -58,7 +58,6 @@ import { ZooKeeper } from '@dubbo.ts/zookeeper';
 const registry = new ZooKeeper(app, {
   host: '127.0.0.1'
 });
-app.useRegistry(registry);
 ```
 
 `ZooKeeper`目前采用的库是 [node-zookeeper-client](https://www.npmjs.com/package/node-zookeeper-client)。除`host`参数指定注册中心地址外，其他参数参考[这里](https://www.npmjs.com/package/node-zookeeper-client#client-createclientconnectionstring-options)。

@@ -20,6 +20,7 @@ export class ZooKeeper extends Set<string> implements TRegistry {
       spinDelay: options.spinDelay || 1000,
       retries: options.retries || 0,
     });
+    this.application.useRegistry(this);
   }
 
   get host() {
