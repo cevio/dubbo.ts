@@ -82,6 +82,7 @@ registry.addService('com.mifa.stib.factory', ['use']);
 
 ```ts
 import { Connection, Provider } from '@dubbo.ts/provider';
+const provider = new Provider(app);
 provider.on('connect', () => console.log('client connected'));
 provider.on('disconnect', () => console.log('client disconnect'))
 provider.on('listening', () => console.log(' - Tcp connection is listening'));
