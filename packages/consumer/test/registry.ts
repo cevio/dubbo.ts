@@ -7,7 +7,7 @@ const app = new Application();
 const consumer = new Consumer(app);
 const java = require('js-to-java');
 const registry = new ZooKeeper(app, {
-  host: '127.0.0.1',
+  host: '127.0.0.1'
 });
 
 app.application = 'client';

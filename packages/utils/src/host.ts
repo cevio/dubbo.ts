@@ -7,7 +7,7 @@ export const localhost = Object.keys(interfaces).map(function(nic) {
   return addresses.length ? addresses[0].address : undefined;
 }).filter(Boolean)[0];
 
-function isLoopback(addr: string) {
+function isLoopback(addr: string): boolean {
   return (
     /^(::f{4}:)?127\.([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})/.test(addr) ||
     /^fe80::1$/.test(addr) ||

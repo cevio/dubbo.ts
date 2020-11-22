@@ -1,6 +1,7 @@
 import { TRegistry } from "./registry";
 
 export * from './registry';
+
 export class Application {
   private readonly configs = new Map<string, any>();
   private registry: TRegistry;
