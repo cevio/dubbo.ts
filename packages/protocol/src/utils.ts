@@ -4,7 +4,7 @@ export const MAGIC_LOW = 0xbb;
 export const ID_SERIALIZE = 2;
 export const FLAG_REQEUST = 0x80;
 export const FLAG_TWOWAY = 0x40;
-export const FLAG_EVENT = 0x20;
+export const FLAG_EVENT = 0x20; 
 
 export enum RESPONSE_STATUS {
   OK = 20,

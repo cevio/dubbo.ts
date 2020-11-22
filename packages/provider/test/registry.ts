@@ -5,7 +5,7 @@ import { Connection, Provider } from '../src';
 const app = new Application();
 const provider = new Provider(app);
 const registry = new ZooKeeper(app, {
-  host: '127.0.0.1'
+  host: '127.0.0.1',
 });
 
 app.application = 'server';

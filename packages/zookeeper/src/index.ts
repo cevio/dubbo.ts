@@ -9,6 +9,7 @@ export interface TZooKeeperOptions {
   spinDelay?: number,
   retries?: number,
 }
+
 export class ZooKeeper extends Set<string> implements TRegistry {
   private readonly zookeeper: Client;
   constructor(private readonly application: Application, options: TZooKeeperOptions = { host: localhost }) {
