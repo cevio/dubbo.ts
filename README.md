@@ -229,6 +229,6 @@ const args = [java.combine('com.mifa.stib.common.RpcData', {
   consumer.on('channels', result => console.log('get channels:', result.map((res: any) => res.host)));
   ```
 
-## Perfomance
+## Performance
 
 ![dubbo performance](https://cdn.aidigger.com/Bumblebee/2020-11-22/c50ca1eb29a1fad7e19da5b05564dcdd.png)
