@@ -5,4 +5,6 @@ export interface TRegistry {
   onConsumerRegister(name: string, options: { group?: string, version?: string }): Promise<string>;
   onConsumerUnRegister(url: string): Promise<void>;
   onConsumerQuery(name: string, options: { group?: string, version?: string }): Promise<UrlWithParsedQuery[]>;
+  onConsumerConnect(): Promise<void>;
+  onConsumerDisconnect(): Promise<void>;
 }

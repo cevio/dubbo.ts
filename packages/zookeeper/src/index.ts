@@ -103,6 +103,14 @@ export class ZooKeeper extends Set<string> implements TRegistry {
     }).filter(Boolean);
   }
 
+  public onConsumerConnect() {
+    return this.connect();
+  }
+
+  public onConsumerDisconnect() {
+    return this.close();
+  }
+
   public async onProviderUnPublish() {
     await Promise.all(Array.from(this.values()).map(url => this.remove(url)));
     await this.close();

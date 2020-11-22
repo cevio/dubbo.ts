@@ -43,15 +43,17 @@ export class Consumer extends EventEmitter {
     return await this.balance.getOne(id);
   }
 
-  public launch() {
+  public async launch() {
     this.listener.addProcessListener();
+    await this.application.onConsumerConnect();
   }
 
-  async close() {
+  public async close() {
     const pools: Promise<void>[] = [];
     for (const [, client] of this.channels) {
       pools.push(client.close());
     }
     await Promise.all(pools);
+    await this.application.onConsumerDisconnect();
   }
 }

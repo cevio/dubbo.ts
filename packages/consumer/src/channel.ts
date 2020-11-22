@@ -95,7 +95,9 @@ export class Channel extends EventEmitter {
 
   public async close(passive?: boolean) {
     this.pool.close();
-    !passive && await new Promise<void>((resolve) => this.tcp.end(resolve));
+    try{
+      !passive && await new Promise<void>((resolve) => this.tcp.end(resolve));
+    } catch(e) {}
     this.emit('disconnect');
     this.consumer.emit('disconnect', this);
   }

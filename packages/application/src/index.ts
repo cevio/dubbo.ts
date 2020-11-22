@@ -127,6 +127,18 @@ export class Application {
     return this.registry.onConsumerQuery(name, options);
   }
 
+  public onConsumerConnect() {
+    if (this.registry) {
+      return this.registry.onConsumerConnect();
+    }
+  }
+
+  public async onConsumerDisconnect() {
+    if (this.registry) {
+      return await this.registry.onConsumerDisconnect();
+    }
+  }
+
   public useRegistry<T extends TRegistry>(registry: T) {
     this.registry = registry;
     return registry;

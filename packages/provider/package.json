@@ -22,5 +22,8 @@
     "@dubbo.ts/application": "^1.0.0",
     "@dubbo.ts/protocol": "^1.0.0",
     "@dubbo.ts/utils": "^1.0.0"
+  },
+  "devDependencies": {
+    "@dubbo.ts/zookeeper": "^1.0.0"
   }
 }

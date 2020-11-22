@@ -18,7 +18,7 @@ export class Balance extends Map<string, Map<string, {
       const _id = getFinger(res.host, Number(res.port));
       if (!chunk.has(_id)) {
         chunk.set(_id, {
-          host: res.host,
+          host: res.hostname,
           port: Number(res.port),
           count: 0,
           channel: null,
