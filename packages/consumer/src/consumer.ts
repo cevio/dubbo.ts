@@ -33,7 +33,7 @@ export class Consumer extends EventEmitter {
   }
 
   // 注册中心模式
-  public async invoke(name: string, options: { version?: string, group?: string }) {
+  public async invoke(name: string, options: { version?: string, group?: string } = {}) {
     const id = getRegistryFinger(name, options);
     if (this.balance.has(id)) return await this.balance.getOne(id);
     const result = await this.application.onConsumerQuery(name, options);

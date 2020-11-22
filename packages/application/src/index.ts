@@ -71,7 +71,7 @@ export class Application {
   }
 
   get anyHost(): boolean {
-    return this.configs.get('anyhost') || false;
+    return this.configs.get('anyhost') || true;
   }
 
   set register(value: boolean) {
