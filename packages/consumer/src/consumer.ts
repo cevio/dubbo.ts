@@ -4,9 +4,11 @@ import { createProcessListener } from '@dubbo.ts/utils';
 import { Channel } from './channel';
 import { getFinger, getRegistryFinger } from './finger';
 import { Balance } from './balance';
+import { Invocation } from './invocation';
 export class Consumer extends EventEmitter {
   private readonly channels: Map<string, Channel> = new Map();
   private readonly balance: Balance = new Balance((host, port) => this.connect(host, port));
+  private readonly invokers = new Invocation();
   private readonly listener = createProcessListener(
     () => this.close(),
     e => this.emit('error', e)
@@ -36,10 +38,12 @@ export class Consumer extends EventEmitter {
   public async invoke(name: string, options: { version?: string, group?: string } = {}) {
     const id = getRegistryFinger(name, options);
     if (this.balance.has(id)) return await this.balance.getOne(id);
-    const result = await this.application.onConsumerQuery(name, options);
-    this.emit('channels', result);
-    if (!result.length) throw new Error('cannot find any host');
-    this.balance.setMany(id, result);
+    await this.invokers.fetch(id, async () => {
+      const result = await this.application.onConsumerQuery(name, options);
+      this.emit('channels', result);
+      if (!result.length) throw new Error('cannot find any host');
+      this.balance.setMany(id, result);
+    });
     return await this.balance.getOne(id);
   }
 
