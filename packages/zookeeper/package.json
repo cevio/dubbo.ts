@@ -1,6 +1,6 @@
 {
   "name": "@dubbo.ts/zookeeper",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "dubbo zookeeper module",
   "author": "",
   "homepage": "https://github.com/cevio/dubbo.ts",
@@ -19,9 +19,9 @@
     "access": "public"
   },
   "dependencies": {
-    "@dubbo.ts/application": "^1.0.0",
-    "@dubbo.ts/protocol": "^1.0.0",
-    "@dubbo.ts/utils": "^1.0.0",
+    "@dubbo.ts/application": "^1.0.1",
+    "@dubbo.ts/protocol": "^1.0.1",
+    "@dubbo.ts/utils": "^1.0.1",
     "@types/node-zookeeper-client": "^0.2.7",
     "node-zookeeper-client": "^1.1.0"
   }
