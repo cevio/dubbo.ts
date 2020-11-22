@@ -222,7 +222,7 @@ const args = [java.combine('com.mifa.stib.common.RpcData', {
   ```
 - `error` 服务出错触发该事件，接受一个错误对象。
   ```ts
-  provider.on('error', (e) => console.error(e));
+  consumer.on('error', (e) => console.error(e));
   ```
 - `channels` 当从注册中心获取到数据后触发该事件，参数为所有有效匹配解构的URL序列化对象。
   ```ts
