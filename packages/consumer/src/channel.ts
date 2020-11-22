@@ -33,13 +33,10 @@ export class Channel extends EventEmitter {
     this.RECONNECTING = false;
   }
 
-  private async retryConnect(options: {
-    timeout?: number,
-    retries?: number,
-  } = {}) {
+  private async retryConnect() {
     await this.callbacks.wait(() => Retry((retry: any) => this.connect().catch(retry), {
-      retries: options.retries || this.consumer.application.retries,
-      minTimeout: options.timeout || this.consumer.application.timeout,
+      retries: this.consumer.application.retries,
+      minTimeout: this.consumer.application.timeout,
     }));
   }
 
@@ -71,10 +68,8 @@ export class Channel extends EventEmitter {
   public async execute(name: string, method: string, args: any[], options: {
     version?: string,
     group?: string,
-    timeout?: number,
-    retries?: number
   } = {}) {
-    await this.retryConnect({ timeout: options.timeout, retries: options.retries });
+    await this.retryConnect();
 
     const version = options.version || '*';
     const group = options.group || '*';
@@ -93,7 +88,7 @@ export class Channel extends EventEmitter {
       req.setRequestId(id);
       req.setTwoWay(true);
       req.setData(attchment);
-      this.callbacks.createRequestTask(id, resolve, reject, options.timeout || this.consumer.application.timeout);
+      this.callbacks.createRequestTask(id, resolve, reject, this.consumer.application.timeout);
       this.pool.putWriteBuffer(req.value());
     })
   }
@@ -101,6 +96,7 @@ export class Channel extends EventEmitter {
   public async close(passive?: boolean) {
     this.pool.close();
     !passive && await new Promise<void>((resolve) => this.tcp.end(resolve));
+    this.emit('disconnect');
     this.consumer.emit('disconnect', this);
   }
 }

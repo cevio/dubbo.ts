@@ -6,6 +6,7 @@ const provider = new Provider(app);
 
 app.version = '2.0.2';
 app.heartbeat = 600000;
+app.port = 8081;
 
 provider.on('connect', () => console.log('client connected'));
 provider.on('disconnect', () => console.log('client disconnect'))
@@ -22,7 +23,7 @@ provider.on('data', (reply: ReturnType<Connection['createExecution']>) => {
     }
   })
 })
-provider.listen(8081).then(tcp => {
+provider.listen().then(tcp => {
   console.log(' - Tcp server on', 'port:', 8081, 'status:', tcp.listening);
 });
 

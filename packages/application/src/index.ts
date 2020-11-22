@@ -6,6 +6,14 @@ export class Application {
   private readonly configs = new Map<string, any>();
   private registry: TRegistry;
 
+  set port(value: number) {
+    this.configs.set('port', value);
+  }
+
+  get port() {
+    return this.configs.has('port') ? this.configs.get('port') : 5000;
+  }
+
   set root(value: string) {
     this.configs.set('root', value);
   }
@@ -90,34 +98,33 @@ export class Application {
     return this.configs.has('retries') ? Number(this.configs.get('retries')) : 3;
   }
 
-  public onRegistryConnect() {
+  public onProviderConnect() {
     if (this.registry) {
-      return this.registry.connect();
+      return this.registry.onProviderPublish();
     }
   }
 
-  public onRegistryClose() {
+  public onProviderDisconnect() {
     if (this.registry) {
-      return this.registry.close();
+      return this.registry.onProviderUnPublish();
     }
   }
 
-  public onRegistryCreate(url: string) {
+  public onConsumerRegister(name: string, options: { group?: string, version?: string }) {
     if (this.registry) {
-      return this.registry.create(url);
+      return this.registry.onConsumerRegister(name, options);
     }
   }
 
-  public onRegistryRemove(url: string) {
+  public onConsumerUnRegister(mark: any) {
     if (this.registry) {
-      return this.registry.remove(url);
+      return this.registry.onConsumerUnRegister(mark);
     }
   }
 
-  public onRegistryQuery(url: string) {
-    if (this.registry) {
-      return this.registry.query(url);
-    }
+  public onConsumerQuery(name: string, options: { group?: string, version?: string }) {
+    if (!this.registry) throw new Error('non-registry started, cannot find the node from zookeeper.');
+    return this.registry.onConsumerQuery(name, options);
   }
 
   public useRegistry<T extends TRegistry>(registry: T) {

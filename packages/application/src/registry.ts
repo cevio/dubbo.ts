@@ -1,7 +1,8 @@
+import { UrlWithParsedQuery } from 'url';
 export interface TRegistry {
-  connect(): Promise<unknown>;
-  close(): Promise<unknown>;
-  create(uri: string): Promise<void>;
-  remove(uri: string): Promise<void>;
-  query(path: string): Promise<string[]>;
+  onProviderPublish(): Promise<void>;
+  onProviderUnPublish(): Promise<void>;
+  onConsumerRegister(name: string, options: { group?: string, version?: string }): Promise<string>;
+  onConsumerUnRegister(url: string): Promise<void>;
+  onConsumerQuery(name: string, options: { group?: string, version?: string }): Promise<UrlWithParsedQuery[]>;
 }

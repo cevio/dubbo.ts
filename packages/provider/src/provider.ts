@@ -31,18 +31,20 @@ export class Provider extends EventEmitter {
     });
   }
 
-  public async listen(port: number) {
+  public async listen() {
     await new Promise<void>((resolve, reject) => {
-      this.tcp.listen(port, (err?: Error) => {
+      this.tcp.listen(this.application.port, (err?: Error) => {
         if (err) return reject(err);
         resolve();
       })
     });
     this.listener.addProcessListener();
+    await this.application.onProviderConnect();
     return this.tcp;
   }
 
   public async close() {
+    await this.application.onProviderDisconnect();
     await Promise.all(
       Array.from(this.connections.values())
         .map(connection => connection.close())
