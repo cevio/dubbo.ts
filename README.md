@@ -47,7 +47,6 @@ app.heartbeat = 600000;
 | register | `boolean` | 是否为注册者 | `false` | 否 |
 | heartbeat | `number` | 心跳频率，单位毫秒(ms) | `60000` | 否 |
 | retries | `number` | 重试次数| `3` | 否 |
-| timeout | `number` | 超时时间，单位毫秒(ms)| `20000` | 否 |
 
 ## Registry
 
