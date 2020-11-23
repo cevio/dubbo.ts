@@ -30,8 +30,7 @@ export class Connection extends EventEmitter {
         if (schema.isTwoWay) {
           return this.reply(result.status, result.data, schema);
         }
-      })
-        .catch(e => this.reply(RESPONSE_STATUS.SERVICE_ERROR, e.message, schema));
+      }).catch(e => this.reply(RESPONSE_STATUS.SERVICE_ERROR, e.message, schema));
     }
   }
 
