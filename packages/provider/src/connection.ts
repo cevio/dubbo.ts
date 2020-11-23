@@ -26,7 +26,11 @@ export class Connection extends EventEmitter {
       data?: T
     }>) => {
       const result = Promise.resolve(callback(schema, RESPONSE_STATUS));
-      result.then(({ status, data }) => this.reply(status, data, schema))
+      result.then((result) => {
+        if (schema.isTwoWay) {
+          return this.reply(result.status, result.data, schema);
+        }
+      })
         .catch(e => this.reply(RESPONSE_STATUS.SERVICE_ERROR, e.message, schema));
     }
   }
