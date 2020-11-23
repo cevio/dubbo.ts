@@ -3,6 +3,8 @@ import { EventEmitter } from 'events';
 import { Provider } from "./provider";
 import { Pool, TDecodeRequestSchema, RESPONSE_STATUS, Response, Attachment } from '@dubbo.ts/protocol';
 
+export type TProviderReply = ReturnType<Connection['createExecution']>;
+
 export class Connection extends EventEmitter {
   private readonly pool: Pool;
   constructor(
