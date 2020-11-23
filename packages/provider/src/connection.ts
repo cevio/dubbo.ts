@@ -20,7 +20,7 @@ export class Connection extends EventEmitter {
     this.pool.startHeartBeat();
   }
 
-  private createExecution(schema: TDecodeRequestSchema) {
+  public createExecution(schema: TDecodeRequestSchema) {
     return <T = any>(callback: (schema: TDecodeRequestSchema, status: typeof RESPONSE_STATUS) => Promise<{
       status: RESPONSE_STATUS,
       data?: T
