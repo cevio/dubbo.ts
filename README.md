@@ -2,6 +2,8 @@
 
 一套高性能的nodejs端duboo协议架构。提供`provider`与`consumer`完整的通讯。
 
+感兴趣的朋友请看演示: [dubbo.ts-example](https://github.com/cevio/dubbo.ts-example)
+
 **支持的连接模式：**
 
 - 直连模式
