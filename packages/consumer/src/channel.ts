@@ -5,14 +5,21 @@ import { Pool, TDecodeResponseSchema } from '@dubbo.ts/protocol';
 import { Consumer } from "./consumer";
 import { Callbacks } from './callbacks';
 import { Request, Attachment } from '@dubbo.ts/protocol';
+import { Events } from './events';
 
 const Retry = require('promise-retry');
+
+type TChannleEvents = {
+  mounted: [],
+  unmounted: [],
+}
 
 export class Channel extends EventEmitter {
   private tcp: Socket;
   public readonly id: string;
   private readonly pool: Pool;
   private readonly callbacks = new Callbacks(this);
+  public readonly lifecycle = new Events<TChannleEvents>();
   private RECONNECTING = false;
   constructor(
     private readonly host: string, 
@@ -62,6 +69,7 @@ export class Channel extends EventEmitter {
         resolve();
       });
     });
+    await this.lifecycle.emitAsync('mounted');
     this.tcp = tcp;
   }
 
@@ -95,6 +103,7 @@ export class Channel extends EventEmitter {
 
   public async close(passive?: boolean) {
     this.pool.close();
+    await this.lifecycle.emitAsync('unmounted');
     try{
       !passive && await new Promise<void>((resolve) => this.tcp.end(resolve));
     } catch(e) {}

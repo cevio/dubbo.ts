@@ -27,7 +27,7 @@ export class Balance extends Map<string, Map<string, {
     });
   }
 
-  public async getOne(id: string): Promise<Channel> {
+  public getOne(id: string, callback: (channel: Channel) => void): Channel {
     const chunks = this.get(id);
     const values = Array.from(chunks.values());
     const minValue = Math.min(...values.map(chunk => chunk.count));
@@ -37,6 +37,7 @@ export class Balance extends Map<string, Map<string, {
         values[i].count++;
         if (!values[i].channel) {
           const channel = this.connect(values[i].host, values[i].port);
+          callback(channel);
           channel.on('disconnect', () => {
             values[i].channel = null;
             values[i].count = 0;

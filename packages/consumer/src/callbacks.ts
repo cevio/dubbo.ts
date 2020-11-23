@@ -3,6 +3,7 @@ import { Channel } from './channel';
 export class Callbacks extends Map<number, [(data: any) => void, (e: Error) => void]> {
   private id = 0;
   private connectCode: 0 | 1 | 2 | 3 = 0;
+  private error: Error;
   private readonly waits: Set<{
     resolve: () => void,
     reject: (e: Error) => void,
@@ -72,6 +73,7 @@ export class Callbacks extends Map<number, [(data: any) => void, (e: Error) => v
           for (const { resolve } of this.waits) resolve();
         }).catch(e => {
           this.connectCode = 3;
+          this.error = e;
           for (const { reject } of this.waits) reject(e);
           return Promise.reject(e);
         });
@@ -99,7 +101,7 @@ export class Callbacks extends Map<number, [(data: any) => void, (e: Error) => v
           this.waits.add(operation);
         });
         break;
-      case 3: throw new Error('[rpc] client connect failed');
+      case 3: throw this.error;
     }
   }
 }

@@ -37,14 +37,20 @@ export class Consumer extends EventEmitter {
   // 注册中心模式
   public async invoke(name: string, options: { version?: string, group?: string } = {}) {
     const id = getRegistryFinger(name, options);
-    if (this.balance.has(id)) return await this.balance.getOne(id);
-    await this.invokers.fetch(id, async () => {
-      const result = await this.application.onConsumerQuery(name, options);
-      this.emit('channels', result);
-      if (!result.length) throw new Error('cannot find any host');
-      this.balance.setMany(id, result);
+    if (!this.balance.has(id)) {
+      await this.invokers.fetch(id, async () => {
+        const result = await this.application.onConsumerQuery(name, options);
+        this.emit('channels', result);
+        if (!result.length) throw new Error('cannot find any host');
+        this.balance.setMany(id, result);
+      });
+    }
+    return this.balance.getOne(id, (channel) => {
+      channel.lifecycle.on('mounted', async () => {
+        const path = await this.application.onConsumerRegister(name, options);
+        channel.lifecycle.on('unmounted', () => this.application.onConsumerUnRegister(path));
+      })
     });
-    return await this.balance.getOne(id);
   }
 
   public async launch() {
