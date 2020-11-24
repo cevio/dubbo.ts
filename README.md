@@ -76,6 +76,21 @@ const registry = new ZooKeeper(app, {
 registry.addService('com.mifa.stib.factory', ['use']);
 ```
 
+### Custom Match
+
+自定义zookeeper资源的匹配规则，返回一个布尔值。
+
+```ts
+import { Attachment } from '@dubbo.ts/protocol';
+registry.setChannelMatcher((uri, options) => {
+  const interfaceMatched = uri.query[Attachment.INTERFACE_KEY] === options.interface || uri.query[Attachment.PATH_KEY] === options.interface;
+  const groupMatched = options.group === '*' ? true : (uri.query[Attachment.GROUP_KEY] === options.group);
+  const versionMatched = options.version === '0.0.0' ? true : uri.query[Attachment.VERSION_KEY] === options.version;
+  if (interfaceMatched && groupMatched && versionMatched) return true;
+  return false;
+})
+```
+
 ## Provider
 
 提供服务模块。

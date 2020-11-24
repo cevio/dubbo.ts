@@ -2,7 +2,7 @@ import { TRegistry, Application } from '@dubbo.ts/application';
 import { Client, createClient, CreateMode, Stat, Event } from 'node-zookeeper-client';
 import { localhost } from '@dubbo.ts/utils';
 import { Attachment } from '@dubbo.ts/protocol';
-import { format, parse } from 'url';
+import { format, parse, UrlWithParsedQuery } from 'url';
 
 export interface TZooKeeperOptions {
   host: string,
@@ -11,8 +11,15 @@ export interface TZooKeeperOptions {
   retries?: number,
 }
 
+type TChannelMatchHandler = (uri: UrlWithParsedQuery, options: {
+  interface: string,
+  group?: string,
+  version: string,
+}) => boolean;
+
 export class ZooKeeper extends Set<string> implements TRegistry {
   private readonly zookeeper: Client;
+  private channelMatchRule: TChannelMatchHandler;
   constructor(private readonly application: Application, options: TZooKeeperOptions = { host: localhost }) {
     super();
     this.zookeeper = createClient(options.host, {
@@ -21,6 +28,11 @@ export class ZooKeeper extends Set<string> implements TRegistry {
       retries: options.retries || 0,
     });
     this.application.useRegistry(this);
+  }
+
+  public setChannelMatcher(callback: TChannelMatchHandler) {
+    this.channelMatchRule = callback;
+    return this;
   }
 
   get host() {
@@ -99,6 +111,10 @@ export class ZooKeeper extends Set<string> implements TRegistry {
     const urls = (await this.query(path)) || [];
     return urls.map(url => {
       const URI = parse(decodeURIComponent(url), true);
+      if (this.channelMatchRule && this.channelMatchRule(URI, {
+        interface: name,
+        group, version,
+      })) return URI;
       const interfaceMatched = URI.query[Attachment.INTERFACE_KEY] === name || URI.query[Attachment.PATH_KEY] === name;
       const groupMatched = group === '*' ? true : (URI.query[Attachment.GROUP_KEY] === group);
       const versionMatched = version === '0.0.0' ? true : URI.query[Attachment.VERSION_KEY] === version;
