@@ -99,7 +99,7 @@ export class ZooKeeper extends Set<string> implements TRegistry {
     const urls = (await this.query(path)) || [];
     return urls.map(url => {
       const URI = parse(decodeURIComponent(url), true);
-      const interfaceMatched = URI.query[Attachment.INTERFACE_KEY] === name;
+      const interfaceMatched = URI.query[Attachment.INTERFACE_KEY] === name || URI.query[Attachment.PATH_KEY] === name;
       const groupMatched = group === '*' ? true : (URI.query[Attachment.GROUP_KEY] === group);
       const versionMatched = version === '0.0.0' ? true : URI.query[Attachment.VERSION_KEY] === version;
       if (interfaceMatched && groupMatched && versionMatched) return URI;
