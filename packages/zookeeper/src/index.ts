@@ -101,8 +101,9 @@ export class ZooKeeper extends Set<string> implements TRegistry {
       const URI = parse(decodeURIComponent(url), true);
       const interfaceMatched = URI.query[Attachment.INTERFACE_KEY] === name;
       const groupMatched = group === '*' ? true : (URI.query[Attachment.GROUP_KEY] === group);
-      const versionMatched = URI.query[Attachment.VERSION_KEY] === version;
+      const versionMatched = version === '0.0.0' ? true : URI.query[Attachment.VERSION_KEY] === version;
       if (interfaceMatched && groupMatched && versionMatched) return URI;
+      return null;
     }).filter(Boolean);
   }
 
