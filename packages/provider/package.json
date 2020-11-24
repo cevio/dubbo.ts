@@ -1,6 +1,6 @@
 {
   "name": "@dubbo.ts/provider",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "dubbo provider module",
   "author": "",
   "homepage": "https://github.com/cevio/dubbo.ts",
@@ -24,6 +24,6 @@
     "@dubbo.ts/utils": "^1.0.3"
   },
   "devDependencies": {
-    "@dubbo.ts/zookeeper": "^1.0.6"
+    "@dubbo.ts/zookeeper": "^1.0.7"
   }
 }
