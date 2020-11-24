@@ -184,9 +184,13 @@ const result = await client.execute(interface, method, args);
 
 ```ts
 // consumer.invoke(inteface: string, configs?: { version?: string, group?: string });
-const client = await consumer.invoke('com.mifa.stib.factory', {});
+const client = await consumer.invoke(interface, {});
 const result = await client.execute(interface, method, args);
 ```
+
+`consumer.invoke`主要是用来从注册中心查询资源后得到`host`与`port`来实例化一个直连的clinent对象。它不会重复创建实例，而是缓存已有的实例。不必担心每次调用都是实例化的问题。
+
+`consumer.invoke`的`interface`与 `client.execute` 的 `interface` 是同一个，这样做仅仅是 `consumer.invoke` 来获取注册中心的资源，而`client.execute`才是真正执行的参数。
 
 注意: `args`参数必须是一个特定的解构，可以通过[js-to-java](https://npmjs.com/js-to-java)查看使用。
 
