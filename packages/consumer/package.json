@@ -1,6 +1,6 @@
 {
   "name": "@dubbo.ts/consumer",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "dubbo consumer module",
   "author": "",
   "homepage": "https://github.com/cevio/dubbo.ts",
@@ -19,13 +19,13 @@
     "access": "public"
   },
   "dependencies": {
-    "@dubbo.ts/application": "^1.0.3",
+    "@dubbo.ts/application": "^1.0.4",
     "@dubbo.ts/protocol": "^1.0.3",
     "@dubbo.ts/utils": "^1.0.3",
     "promise-retry": "^2.0.1"
   },
   "devDependencies": {
-    "@dubbo.ts/zookeeper": "^1.0.7",
+    "@dubbo.ts/zookeeper": "^1.0.8",
     "js-to-java": "^2.6.1"
   }
 }
