@@ -7,4 +7,5 @@ export interface TRegistry {
   onConsumerQuery(name: string, options: { group?: string, version?: string }): Promise<UrlWithParsedQuery[]>;
   onConsumerConnect(): Promise<void>;
   onConsumerDisconnect(): Promise<void>;
+  addService(name: string, methods: string[], options: { group?: string, version?: string }): any;
 }

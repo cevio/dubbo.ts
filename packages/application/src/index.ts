@@ -4,8 +4,8 @@ export * from './registry';
 
 export class Application {
   private readonly configs = new Map<string, any>();
-  private registry: TRegistry;
-
+  public registry: TRegistry;
+  
   set port(value: number) {
     this.configs.set('port', value);
   }

@@ -79,7 +79,7 @@ export class Channel extends EventEmitter {
   } = {}) {
     await this.retryConnect();
 
-    const version = options.version || '*';
+    const version = options.version || '0.0.0';
     const group = options.group || '*';
     const id = this.callbacks.createIndex();
 
