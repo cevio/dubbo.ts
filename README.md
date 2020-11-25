@@ -17,6 +17,7 @@
 - [@dubbo.ts/provider](https://npmjs.com/@dubbo.ts/provider) 服务提供者模块
 - [@dubbo.ts/utils](https://npmjs.com/@dubbo.ts/utils) 辅助函数模块
 - [@dubbo.ts/zookeeper](https://npmjs.com/@dubbo.ts/zookeeper) ZooKeeper注册中心模块
+- [@dubbo.ts/server](https://npmjs.com/@dubbo.ts/server) 注解式服务端写法模块
 
 
 ## Application
@@ -251,3 +252,36 @@ const args = [java.combine('com.mifa.stib.common.RpcData', {
 ## Performance
 
 ![dubbo performance](https://cdn.aidigger.com/Bumblebee/2020-11-22/c50ca1eb29a1fad7e19da5b05564dcdd.png)
+
+## Annotation Server
+
+结合IOC理念,我们使用`inversify`来解构我们的开发,从而产生了基于注解式的服务写法,类似java中的注解写法,以便开发者能够快速开发应用.
+
+```ts
+import { Application } from '@dubbo.ts/application';
+import { Server, Service, Proxy, Version, Group } from '@dubbo.ts/server';
+
+@Service('Com.Node.Dubbo.Test')
+// @Version('1.0.0')
+// @Group('development')
+class Test {
+  @Proxy()
+  public sum(a: number, b: number) {
+    return a + b;
+  }
+}
+
+const app = new Application();
+const server = new Server(app);
+
+app.application = '测试';
+app.port = 6000;
+
+server.addService(Test);
+
+server.listen().then(tcp => {
+  console.log(' - Tcp server on', 'port:', app.port, 'status:', tcp.listening);
+});
+```
+
+> 只有被`@Proxy()`标记过的函数才能被微服务调用.因为我们本来就应该考虑只有公共函数才被调用,而私有函数肯定不希望被调用.通过这个注解我们可以达到这个目的.
