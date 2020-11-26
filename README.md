@@ -19,6 +19,9 @@
 - [@dubbo.ts/zookeeper](https://npmjs.com/@dubbo.ts/zookeeper) ZooKeeper注册中心模块
 - [@dubbo.ts/server](https://npmjs.com/@dubbo.ts/server) 注解式服务端写法模块
 
+## Performance
+
+![dubbo performance](https://cdn.aidigger.com/Bumblebee/2020-11-22/c50ca1eb29a1fad7e19da5b05564dcdd.png)
 
 ## Application
 
@@ -248,10 +251,6 @@ const args = [java.combine('com.mifa.stib.common.RpcData', {
   ```ts
   consumer.on('channels', result => console.log('get channels:', result.map((res: any) => res.host)));
   ```
-
-## Performance
-
-![dubbo performance](https://cdn.aidigger.com/Bumblebee/2020-11-22/c50ca1eb29a1fad7e19da5b05564dcdd.png)
 
 ## Annotation Server
 
