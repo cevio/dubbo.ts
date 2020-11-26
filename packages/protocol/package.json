@@ -1,6 +1,6 @@
 {
   "name": "@dubbo.ts/protocol",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "dubbo protocol module",
   "author": "",
   "homepage": "https://github.com/cevio/dubbo.ts",
