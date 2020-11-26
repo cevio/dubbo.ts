@@ -22,6 +22,7 @@
     "@dubbo.ts/application": "^1.0.4",
     "@dubbo.ts/protocol": "^1.0.3",
     "@dubbo.ts/provider": "^1.0.13",
+    "@dubbo.ts/utils": "^1.0.4",
     "inversify": "^5.0.1",
     "reflect-metadata": "^0.1.13"
   }

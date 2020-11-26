@@ -3,8 +3,23 @@ import { Provider, TProviderReply } from '@dubbo.ts/provider';
 import { AnnotationDependenciesAutoRegister, AnnotationMetaDataScan, TClassIndefiner } from './annotation/implemention/metaDataScaner';
 import { Container } from 'inversify';
 import { Attachment, RESPONSE_STATUS, TDecodeRequestSchema } from '@dubbo.ts/protocol';
+import { Events } from '@dubbo.ts/utils';
 import { NAMESPACE } from './annotation/support/namespace';
+
+export interface TMetaData {
+  classInterface: string,
+  classGroup: string,
+  classVersion: string,
+  classMethods: string[],
+}
+
+type TServerEvents = {
+  ['runtime:before']: [TDecodeRequestSchema, { target: any, method: string }],
+  ['runtime:after']: [TDecodeRequestSchema, any],
+}
+
 export class Server extends Provider {
+  public readonly lifecycle = new Events<TServerEvents>();
   public readonly container = new Container();
   // interface - group - version: ClassModule
   private readonly modules: Map<string, Map<string, Map<string, TClassIndefiner<any>>>> = new Map();
@@ -27,8 +42,10 @@ export class Server extends Provider {
     const classModule = groupStorage.get(classVersion);
     const target = this.container.get(classModule);
     if (!target) return this.responseNotFound(status, `Cannot find the reference: ${classInterface}#${classGroup}@${classVersion}`);
-    if (!target[method]) return this.responseNotFound(status, `Cannot find the method: ${classInterface}#${classGroup}@${classVersion}:${method}`)
+    if (!target[method]) return this.responseNotFound(status, `Cannot find the method: ${classInterface}#${classGroup}@${classVersion}:${method}`);
+    await this.lifecycle.emitAsync('runtime:before', schema, { target, method });
     const result = await Promise.resolve(target[method](...parameters));
+    await this.lifecycle.emitAsync('runtime:after', schema, result)
     return {
       status: status.OK,
       data: result,
@@ -55,6 +72,7 @@ export class Server extends Provider {
     const classGroup = classMetadata.meta.got<string>(NAMESPACE.GROUP, '*');
     const classVersion = classMetadata.meta.got<string>(NAMESPACE.GROUP, '0.0.0');
     const classMethods: string[] = [];
+    this.emit('collect:class', classModule, classMetadata);
     this.injectClassModules(...classInjectors);
     for (const [key, method] of classMetadata.methods) {
       const propertyProxy = method.meta.got<boolean>(NAMESPACE.PROXY, false);
@@ -62,6 +80,7 @@ export class Server extends Provider {
       classMethods.push(key);
       const propertyInjectors = method.meta.got<TClassIndefiner<any>[]>(NAMESPACE.INJECTABLE, []);
       this.injectClassModules(...propertyInjectors);
+      this.emit('collect:method', classModule, key, method);
     }
     this.setStorageMetaData(classInterface, classGroup, classVersion, classModule);
     if (this.application.registry) {
@@ -70,6 +89,12 @@ export class Server extends Provider {
         version: classVersion,
       });
     }
+    this.emit('collect:data', classModule, {
+      classInterface,
+      classGroup,
+      classVersion,
+      classMethods,
+    } as TMetaData);
     return this;
   }
 

@@ -259,15 +259,16 @@ const args = [java.combine('com.mifa.stib.common.RpcData', {
 
 ```ts
 import { Application } from '@dubbo.ts/application';
-import { Server, Service, Proxy, Version, Group } from '@dubbo.ts/server';
+import { Server, Service, Proxy, Version, Group, inject } from '@dubbo.ts/server';
 
 @Service('Com.Node.Dubbo.Test')
 // @Version('1.0.0')
 // @Group('development')
 class Test {
+  @inject(SomeOtherModule) private readonly SomeOtherModule: SomeOtherModule;
   @Proxy()
   public sum(a: number, b: number) {
-    return a + b;
+    return a + b + this.SomeOtherModule.sum(a, b);
   }
 }
 
@@ -285,3 +286,33 @@ server.listen().then(tcp => {
 ```
 
 > 只有被`@Proxy()`标记过的函数才能被微服务调用.因为我们本来就应该考虑只有公共函数才被调用,而私有函数肯定不希望被调用.通过这个注解我们可以达到这个目的.
+
+**Events:**
+
+- `collect:class` 在解析class时候metadata数据的自定义处理周期
+  ```ts
+  import { TClassIndefiner, TAnnotationScanerResult } from '@dubbo.ts/server';
+  server.on('collect:class', (classModule: TClassIndefiner<any>, options: TAnnotationScanerResult) => {});
+  ```
+- `collect:method` 在解析method时候metadata数据的自定义处理周期
+  ```ts
+  import { TClassIndefiner, TAnnotationScanerResult, TAnnotationScanerMethod } from '@dubbo.ts/server';
+  server.on('collect:method', (classModule: TClassIndefiner<any>, key: string, method: TAnnotationScanerMethod) => {});
+  ```
+- `collect:data` 在最终解析时候等到的系统给定的数据
+  ```ts
+  import { TClassIndefiner, TMetaData } from '@dubbo.ts/server';
+  server.on('collect:data', (classModule: TClassIndefiner<any>, options: TMetaData) => {});
+  ```
+- `runtime:before` 运行时前置任务周期
+  ```ts
+  import { TDecodeRequestSchema } from '@dubbo.ts/protocol';
+  server.on('runtime:before', (schema: TDecodeRequestSchema, options: { target: any, method: string }) => {});
+  ```
+- `runtime:after` 运行时后置任务周期
+  ```ts
+  import { TDecodeRequestSchema } from '@dubbo.ts/protocol';
+  server.on('runtime:after', (schema: TDecodeRequestSchema, result: any) => {});
+  ```
+
+> `Events` 主要用于对功能的扩展,可以接入很多自定义功能.
