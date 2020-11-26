@@ -5,7 +5,7 @@ import { Pool, TDecodeResponseSchema } from '@dubbo.ts/protocol';
 import { Consumer } from "./consumer";
 import { Callbacks } from './callbacks';
 import { Request, Attachment } from '@dubbo.ts/protocol';
-import { Events } from './events';
+import { Events } from '@dubbo.ts/utils';
 
 const Retry = require('promise-retry');
 
