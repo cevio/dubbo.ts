@@ -80,7 +80,7 @@ export function decodeBuffer(buffer: Buffer, callbacks: {
     
     const isTwoWay = (headerBuffer[2] & FLAG_TWOWAY) !== 0;
     const isResponse = (headerBuffer[2] & FLAG_REQEUST) === 0;
-    const isHeartBeat = (headerBuffer[2] & FLAG_EVENT) !== 0 && bodyLength === 1;
+    const isHeartBeat = (headerBuffer[2] & FLAG_EVENT) !== 0;
 
     if (isHeartBeat) {
       if (isTwoWay) callbacks.heartbeat();

@@ -1,0 +1,24 @@
+{
+  "name": "@dubbo.ts/swagger",
+  "version": "1.0.0",
+  "description": "dubbo swagger module",
+  "author": "",
+  "homepage": "https://github.com/cevio/dubbo.ts",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "directories": {
+    "lib": "src"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@dubbo.ts/server": "^1.0.4"
+  }
+}
