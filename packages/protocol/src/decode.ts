@@ -95,64 +95,55 @@ export function decodeBuffer(buffer: Buffer, callbacks: {
     const requestId = fromBytes8(requestIdBuff);
 
     if (isResponse) {
-      const status = headerBuffer[3];
-      if (status !== RESPONSE_STATUS.OK) {
-        const err = bodyBuffer.slice(1).toString('utf8');
-        callbacks.response({
-          error: new Error(err),
-          id: requestId,
-        })
-      } else {
-        const body = new hassin.DecoderV2(bodyBuffer);
-        const flag = body.readInt();
-        switch (flag) {
-          case RESPONSE_BODY_FLAG.RESPONSE_VALUE:
-            callbacks.response({
-              data: body.read(),
-              id: requestId,
-            });
-            break;
-          case RESPONSE_BODY_FLAG.RESPONSE_NULL_VALUE:
-            callbacks.response({
-              id: requestId,
-            });
-            break;
-          case RESPONSE_BODY_FLAG.RESPONSE_WITH_EXCEPTION:
-            const exception = body.read();
-            callbacks.response({
-              error: exception instanceof Error
-                ? exception
-                : new Error(exception),
-              id: requestId,
-            });
-            break;
-          case RESPONSE_BODY_FLAG.RESPONSE_NULL_VALUE_WITH_ATTACHMENTS:
-            callbacks.response({
-              attachments: body.read(),
-              id: requestId,
-            });
-            break;
-          case RESPONSE_BODY_FLAG.RESPONSE_VALUE_WITH_ATTACHMENTS:
-            callbacks.response({
-              data: body.read(),
-              attachments: body.read(),
-              id: requestId,
-            });
-            break;
-          case RESPONSE_BODY_FLAG.RESPONSE_WITH_EXCEPTION_WITH_ATTACHMENTS:
-            const exp = body.read();
-            callbacks.response({
-              error: exp instanceof Error ? exp : new Error(exp),
-              attachments: body.read(),
-              id: requestId,
-            })
-            break;
-          default:
-            callbacks.response({
-              error: new Error(`Unknown result flag, expect '0/1/2/3/4/5', get  ${flag})`),
-              id: requestId,
-            });
-        }
+      const body = new hassin.DecoderV2(bodyBuffer);
+      const flag = body.readInt();
+      switch (flag) {
+        case RESPONSE_BODY_FLAG.RESPONSE_VALUE:
+          callbacks.response({
+            data: body.read(),
+            id: requestId,
+          });
+          break;
+        case RESPONSE_BODY_FLAG.RESPONSE_NULL_VALUE:
+          callbacks.response({
+            id: requestId,
+          });
+          break;
+        case RESPONSE_BODY_FLAG.RESPONSE_WITH_EXCEPTION:
+          const exception = body.read();
+          callbacks.response({
+            error: exception instanceof Error
+              ? exception
+              : new Error(exception),
+            id: requestId,
+          });
+          break;
+        case RESPONSE_BODY_FLAG.RESPONSE_NULL_VALUE_WITH_ATTACHMENTS:
+          callbacks.response({
+            attachments: body.read(),
+            id: requestId,
+          });
+          break;
+        case RESPONSE_BODY_FLAG.RESPONSE_VALUE_WITH_ATTACHMENTS:
+          callbacks.response({
+            data: body.read(),
+            attachments: body.read(),
+            id: requestId,
+          });
+          break;
+        case RESPONSE_BODY_FLAG.RESPONSE_WITH_EXCEPTION_WITH_ATTACHMENTS:
+          const exp = body.read();
+          callbacks.response({
+            error: exp instanceof Error ? exp : new Error(exp),
+            attachments: body.read(),
+            id: requestId,
+          })
+          break;
+        default:
+          callbacks.response({
+            error: new Error(`Unknown result flag, expect '0/1/2/3/4/5', get  ${flag})`),
+            id: requestId,
+          });
       }
     } else {
       const body = new hassin.DecoderV2(bodyBuffer);
