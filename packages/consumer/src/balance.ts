@@ -1,13 +1,14 @@
 import { Channel } from './channel';
 import { UrlWithParsedQuery } from 'url';
 import { getFinger } from './finger';
-export class Balance extends Map<string, Map<string, {
+import { TConsumerEvents } from './consumer';
+export class Balance<E extends TConsumerEvents = TConsumerEvents> extends Map<string, Map<string, {
   host: string,
   port: number,
-  channel?: Channel,
+  channel?: Channel<E>,
   count: number
 }>> {
-  constructor(private readonly connect: (host: string, port: number) => Channel) {
+  constructor(private readonly connect: (host: string, port: number) => Channel<E>) {
     super();
   }
 
@@ -27,7 +28,7 @@ export class Balance extends Map<string, Map<string, {
     });
   }
 
-  public getOne(id: string, callback: (channel: Channel) => void): Channel {
+  public getOne(id: string, callback: (channel: Channel<E>) => void): Channel<E> {
     const chunks = this.get(id);
     const values = Array.from(chunks.values());
     const minValue = Math.min(...values.map(chunk => chunk.count));

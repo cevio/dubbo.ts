@@ -1,12 +1,15 @@
 import { createServer } from 'net';
 import { EventEmitter } from 'events';
 import { Application } from '@dubbo.ts/application';
-import { createProcessListener } from '@dubbo.ts/utils';
+import { createProcessListener, Events } from '@dubbo.ts/utils';
 import { Connection } from './connection';
 
-export class Provider extends EventEmitter {
-  private readonly connections: Set<Connection> = new Set();
+export type TPoviderEvents = { mounted: [], unmounted: [] };
+
+export class Provider<E extends TPoviderEvents = TPoviderEvents> extends EventEmitter {
+  private readonly connections: Set<Connection<E>> = new Set();
   private readonly tcp = createServer();
+  public readonly lifecycle = new Events<E>();
   private readonly listener = createProcessListener(
     () => this.close(),
     e => this.emit('error', e)
@@ -19,7 +22,7 @@ export class Provider extends EventEmitter {
     this.tcp.on('error', err => this.emit('error', err));
     this.tcp.on('close', () => this.emit('close'));
     this.tcp.on('connection', socket => {
-      const connection = new Connection(this, socket);
+      const connection = new Connection<E>(this, socket);
       this.connections.add(connection);
       this.emit('connect', connection);
       socket.on('close', () => {
@@ -40,6 +43,7 @@ export class Provider extends EventEmitter {
     });
     this.listener.addProcessListener();
     await this.application.onProviderConnect();
+    await this.lifecycle.emitAsync('mounted');
     return this.tcp;
   }
 
@@ -55,5 +59,6 @@ export class Provider extends EventEmitter {
         resolve();
       })
     });
+    await this.lifecycle.emitAsync('unmounted');
   }
 }

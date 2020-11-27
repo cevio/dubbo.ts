@@ -1,14 +1,14 @@
 import { Socket } from 'net';
 import { EventEmitter } from 'events';
-import { Provider } from "./provider";
+import { Provider, TPoviderEvents } from "./provider";
 import { Pool, TDecodeRequestSchema, RESPONSE_STATUS, Response, Attachment } from '@dubbo.ts/protocol';
 
 export type TProviderReply = ReturnType<Connection['createExecution']>;
 
-export class Connection extends EventEmitter {
+export class Connection<E extends TPoviderEvents = TPoviderEvents> extends EventEmitter {
   private readonly pool: Pool;
   constructor(
-    public readonly provider: Provider, 
+    public readonly provider: Provider<E>, 
     private readonly socket: Socket
   ) {
     super();

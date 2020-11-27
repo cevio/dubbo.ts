@@ -1,9 +1,8 @@
 import { Application } from '@dubbo.ts/application';
-import { Provider, TProviderReply } from '@dubbo.ts/provider';
+import { Provider, TProviderReply, TPoviderEvents } from '@dubbo.ts/provider';
 import { AnnotationDependenciesAutoRegister, AnnotationMetaDataScan, TClassIndefiner } from './annotation/implemention/metaDataScaner';
 import { Container } from 'inversify';
 import { Attachment, RESPONSE_STATUS, TDecodeRequestSchema } from '@dubbo.ts/protocol';
-import { Events } from '@dubbo.ts/utils';
 import { NAMESPACE } from './annotation/support/namespace';
 
 export interface TMetaData {
@@ -13,13 +12,12 @@ export interface TMetaData {
   classMethods: string[],
 }
 
-type TServerEvents = {
+type TServerEvents = TPoviderEvents & {
   ['runtime:before']: [TDecodeRequestSchema, { target: any, method: string }],
   ['runtime:after']: [TDecodeRequestSchema, any],
 }
 
-export class Server extends Provider {
-  public readonly lifecycle = new Events<TServerEvents>();
+export class Server extends Provider<TServerEvents> {
   public readonly container = new Container();
   // interface - group - version: ClassModule
   private readonly modules: Map<string, Map<string, Map<string, TClassIndefiner<any>>>> = new Map();

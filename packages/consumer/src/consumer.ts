@@ -1,14 +1,18 @@
 import { EventEmitter } from 'events';
 import { Application } from '@dubbo.ts/application';
-import { createProcessListener } from '@dubbo.ts/utils';
+import { createProcessListener, Events } from '@dubbo.ts/utils';
 import { Channel } from './channel';
 import { getFinger, getRegistryFinger } from './finger';
 import { Balance } from './balance';
 import { Invocation } from './invocation';
-export class Consumer extends EventEmitter {
-  private readonly channels: Map<string, Channel> = new Map();
-  private readonly balance: Balance = new Balance((host, port) => this.connect(host, port));
+
+export type TConsumerEvents = { mounted: [], unmounted: [] }
+
+export class Consumer<E extends TConsumerEvents = TConsumerEvents> extends EventEmitter {
+  private readonly channels: Map<string, Channel<E>> = new Map();
+  private readonly balance: Balance<E> = new Balance((host, port) => this.connect(host, port));
   private readonly invokers = new Invocation();
+  public readonly lifecycle = new Events<E>();
   private readonly listener = createProcessListener(
     () => this.close(),
     e => this.emit('error', e)
@@ -21,13 +25,13 @@ export class Consumer extends EventEmitter {
   public connect(host: string, port: number) {
     const id = getFinger(host, port);
     if (!this.channels.has(id)) {
-      const channel = new Channel(host, port, this);
+      const channel = new Channel<E>(host, port, this);
       this.channels.set(id, channel);
     }
     return this.channels.get(id);
   }
 
-  public deleteChannel(channel: Channel) {
+  public deleteChannel(channel: Channel<E>) {
     if (this.channels.has(channel.id)) {
       this.channels.delete(channel.id);
     }
@@ -56,6 +60,7 @@ export class Consumer extends EventEmitter {
   public async launch() {
     this.listener.addProcessListener();
     await this.application.onConsumerConnect();
+    await this.lifecycle.emitAsync('mounted');
   }
 
   public async close() {
@@ -65,5 +70,6 @@ export class Consumer extends EventEmitter {
     }
     await Promise.all(pools);
     await this.application.onConsumerDisconnect();
+    await this.lifecycle.emitAsync('unmounted');
   }
 }

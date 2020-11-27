@@ -15,6 +15,8 @@ export class Events<E extends TEvent> extends Map<keyof E, Set<((...args: E[keyo
       for (const item of chunk) {
         await item(...args);
       }
+    } else if (type === 'error') {
+      throw new Error(args[0]);
     }
     return this;
   }
@@ -23,6 +25,8 @@ export class Events<E extends TEvent> extends Map<keyof E, Set<((...args: E[keyo
     if (this.has(type)) {
       const chunk = this.get(type);
       await Promise.all(Array.from(chunk.values()).map(item => item(...args)));
+    } else if (type === 'error') {
+      throw new Error(args[0]);
     }
     return this;
   }

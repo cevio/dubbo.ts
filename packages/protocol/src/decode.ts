@@ -96,6 +96,33 @@ export function decodeBuffer(buffer: Buffer, callbacks: {
 
     if (isResponse) {
       const body = new hassin.DecoderV2(bodyBuffer);
+
+      const isFlag = [
+        RESPONSE_BODY_FLAG.RESPONSE_NULL_VALUE,
+        RESPONSE_BODY_FLAG.RESPONSE_NULL_VALUE_WITH_ATTACHMENTS,
+        RESPONSE_BODY_FLAG.RESPONSE_VALUE,
+        RESPONSE_BODY_FLAG.RESPONSE_VALUE_WITH_ATTACHMENTS,
+        RESPONSE_BODY_FLAG.RESPONSE_WITH_EXCEPTION,
+        RESPONSE_BODY_FLAG.RESPONSE_WITH_EXCEPTION_WITH_ATTACHMENTS
+      ].indexOf(bodyBuffer[0]) > -1;
+
+      if (!isFlag) {
+        if (headerBuffer[3] = RESPONSE_STATUS.OK) {
+          return callbacks.response({
+            data: body.read(),
+            id: requestId,
+          });
+        } else {
+          const _exception = body.read();
+          return callbacks.response({
+            error: _exception instanceof Error
+              ? _exception
+              : new Error(_exception),
+            id: requestId,
+          });
+        }
+      }
+
       const flag = body.readInt();
       switch (flag) {
         case RESPONSE_BODY_FLAG.RESPONSE_VALUE:

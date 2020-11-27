@@ -2,7 +2,7 @@ import { getFinger } from "./finger";
 import { Socket, createConnection } from 'net';
 import { EventEmitter } from 'events';
 import { Pool, TDecodeResponseSchema } from '@dubbo.ts/protocol';
-import { Consumer } from "./consumer";
+import { Consumer, TConsumerEvents } from "./consumer";
 import { Callbacks } from './callbacks';
 import { Request, Attachment } from '@dubbo.ts/protocol';
 import { Events } from '@dubbo.ts/utils';
@@ -14,7 +14,7 @@ type TChannleEvents = {
   unmounted: [],
 }
 
-export class Channel extends EventEmitter {
+export class Channel<E extends TConsumerEvents = TConsumerEvents> extends EventEmitter {
   private tcp: Socket;
   public readonly id: string;
   private readonly pool: Pool;
@@ -24,7 +24,7 @@ export class Channel extends EventEmitter {
   constructor(
     private readonly host: string, 
     private readonly port: number, 
-    public readonly consumer: Consumer
+    public readonly consumer: Consumer<E>
   ) {
     super();
     this.id = getFinger(host, port);
