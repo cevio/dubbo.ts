@@ -196,7 +196,7 @@ consumer.launch();
 ```ts
 // consumer.connect(host: string, port: number)
 const client = consumer.connect('127.0.0.1', 8081);
-const result = await client.execute(interface, method, args);
+const result = await client.execute(interface, method, args, configs);
 ```
 
 注册中心
@@ -204,7 +204,7 @@ const result = await client.execute(interface, method, args);
 ```ts
 // consumer.invoke(inteface: string, configs?: { version?: string, group?: string });
 const client = await consumer.invoke(interface, {});
-const result = await client.execute(interface, method, args);
+const result = await client.execute(interface, method, args, configs);
 ```
 
 `consumer.invoke`主要是用来从注册中心查询资源后得到`host`与`port`来实例化一个直连的clinent对象。它不会重复创建实例，而是缓存已有的实例。不必担心每次调用都是实例化的问题。
