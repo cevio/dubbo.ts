@@ -108,19 +108,20 @@ export function decodeBuffer(buffer: Buffer, callbacks: {
 
       if (!isFlag) {
         if (headerBuffer[3] === RESPONSE_STATUS.OK) {
-          return callbacks.response({
+          callbacks.response({
             data: body.read(),
             id: requestId,
           });
         } else {
           const _exception = body.read();
-          return callbacks.response({
+          callbacks.response({
             error: _exception instanceof Error
               ? _exception
               : new Error(_exception),
             id: requestId,
           });
         }
+        return;
       }
 
       const flag = body.readInt();
