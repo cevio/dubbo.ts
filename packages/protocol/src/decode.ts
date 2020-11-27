@@ -96,35 +96,7 @@ export function decodeBuffer(buffer: Buffer, callbacks: {
 
     if (isResponse) {
       const body = new hassin.DecoderV2(bodyBuffer);
-
-      const isFlag = [
-        RESPONSE_BODY_FLAG.RESPONSE_NULL_VALUE,
-        RESPONSE_BODY_FLAG.RESPONSE_NULL_VALUE_WITH_ATTACHMENTS,
-        RESPONSE_BODY_FLAG.RESPONSE_VALUE,
-        RESPONSE_BODY_FLAG.RESPONSE_VALUE_WITH_ATTACHMENTS,
-        RESPONSE_BODY_FLAG.RESPONSE_WITH_EXCEPTION,
-        RESPONSE_BODY_FLAG.RESPONSE_WITH_EXCEPTION_WITH_ATTACHMENTS
-      ].indexOf(bodyBuffer[0]) > -1;
-
-      if (!isFlag) {
-        if (headerBuffer[3] === RESPONSE_STATUS.OK) {
-          callbacks.response({
-            data: body.read(),
-            id: requestId,
-          });
-        } else {
-          const _exception = body.read();
-          callbacks.response({
-            error: _exception instanceof Error
-              ? _exception
-              : new Error(_exception),
-            id: requestId,
-          });
-        }
-        return;
-      }
-
-      const flag = body.readInt();
+      const flag = body.read();
       switch (flag) {
         case RESPONSE_BODY_FLAG.RESPONSE_VALUE:
           callbacks.response({
@@ -168,10 +140,21 @@ export function decodeBuffer(buffer: Buffer, callbacks: {
           })
           break;
         default:
-          callbacks.response({
-            error: new Error(`Unknown result flag, expect '0/1/2/3/4/5', get  ${flag})`),
-            id: requestId,
-          });
+          if (typeof flag === 'number') {
+            callbacks.response({
+              error: new Error(`Unknown result flag, expect '0/1/2/3/4/5', get  ${flag})`),
+              id: requestId,
+            });
+          } else {
+            const exception = flag;
+            callbacks.response({
+              error: exception instanceof Error
+                ? exception
+                : new Error(exception),
+              id: requestId,
+            });
+          }
+          
       }
     } else {
       const body = new hassin.DecoderV2(bodyBuffer);
