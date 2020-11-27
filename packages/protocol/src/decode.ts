@@ -107,7 +107,7 @@ export function decodeBuffer(buffer: Buffer, callbacks: {
       ].indexOf(bodyBuffer[0]) > -1;
 
       if (!isFlag) {
-        if (headerBuffer[3] = RESPONSE_STATUS.OK) {
+        if (headerBuffer[3] === RESPONSE_STATUS.OK) {
           return callbacks.response({
             data: body.read(),
             id: requestId,
