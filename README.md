@@ -203,6 +203,8 @@ const result = await client.execute(interface, method, args, configs);
 
 ```ts
 // consumer.invoke(inteface: string, configs?: { version?: string, group?: string });
+// version: default value: 0.0.0
+// group: default value: *
 const client = await consumer.invoke(interface, {});
 const result = await client.execute(interface, method, args, configs);
 ```
@@ -306,12 +308,20 @@ server.listen().then(tcp => {
 - `runtime:before` 运行时前置任务周期
   ```ts
   import { TDecodeRequestSchema } from '@dubbo.ts/protocol';
-  server.on('runtime:before', (schema: TDecodeRequestSchema, options: { target: any, method: string }) => {});
+  server.lifecycle.on('runtime:before', (schema: TDecodeRequestSchema, options: { target: any, method: string }) => {});
   ```
 - `runtime:after` 运行时后置任务周期
   ```ts
   import { TDecodeRequestSchema } from '@dubbo.ts/protocol';
-  server.on('runtime:after', (schema: TDecodeRequestSchema, result: any) => {});
+  server.lifecycle.on('runtime:after', (schema: TDecodeRequestSchema, result: any) => {});
+  ```
+- `mounted` 服务启动后处理的生命周期
+  ```ts
+  server.lifecycle.on('mounted', () => {});
+  ```
+- `unmounted` 服务结束时处理的生命周期
+  ```ts
+  server.lifecycle.on('unmounted', () => {});
   ```
 
 > `Events` 主要用于对功能的扩展,可以接入很多自定义功能.
