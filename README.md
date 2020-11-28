@@ -288,23 +288,8 @@ server.listen().then(tcp => {
 
 > 只有被`@Proxy()`标记过的函数才能被微服务调用.因为我们本来就应该考虑只有公共函数才被调用,而私有函数肯定不希望被调用.通过这个注解我们可以达到这个目的.
 
-**Events:**
+**Lifecycles:**
 
-- `collect:class` 在解析class时候metadata数据的自定义处理周期
-  ```ts
-  import { TClassIndefiner, TAnnotationScanerResult } from '@dubbo.ts/server';
-  server.on('collect:class', (classModule: TClassIndefiner<any>, options: TAnnotationScanerResult) => {});
-  ```
-- `collect:method` 在解析method时候metadata数据的自定义处理周期
-  ```ts
-  import { TClassIndefiner, TAnnotationScanerResult, TAnnotationScanerMethod } from '@dubbo.ts/server';
-  server.on('collect:method', (classModule: TClassIndefiner<any>, key: string, method: TAnnotationScanerMethod) => {});
-  ```
-- `collect:data` 在最终解析时候等到的系统给定的数据
-  ```ts
-  import { TClassIndefiner, TMetaData } from '@dubbo.ts/server';
-  server.on('collect:data', (classModule: TClassIndefiner<any>, options: TMetaData) => {});
-  ```
 - `runtime:before` 运行时前置任务周期
   ```ts
   import { TDecodeRequestSchema } from '@dubbo.ts/protocol';
@@ -325,3 +310,56 @@ server.listen().then(tcp => {
   ```
 
 > `Events` 主要用于对功能的扩展,可以接入很多自定义功能.
+
+## Swagger
+
+通过注册中心,我们创建了一套分布式的swagger机制.
+
+```ts
+import { Application } from '@dubbo.ts/application';
+import { Server, Service, Proxy } from '@dubbo.ts/server';
+import { ZooKeeper } from '@dubbo.ts/zookeeper';
+import { Description, InputSchema, OutputSchema, useSwagger } from '@dubbo.ts/swagger';
+
+@Service('Com.Node.Dubbo.Test')
+@Description('Test demo')
+class Test {
+  @Proxy()
+  @OutputSchema({
+    type: 'integer',
+    description: 'test method for sum'
+  })
+  public sum(
+    @InputSchema({ type: 'integer', description: 'parameter 1' }) a: number, 
+    @InputSchema({ type: 'integer', description: 'parameter 2' }) b: number
+  ) {
+    return a + b;
+  }
+}
+
+const app = new Application();
+const server = new Server(app);
+
+app.application = '测试';
+app.port = 6000;
+
+new ZooKeeper(app, {
+  host: '127.0.0.1'
+})
+
+useSwagger(server); // 注意: useSwagger必须写在server.addService之前
+
+server.addService(Test);
+
+server.listen().then(tcp => {
+  console.log(' - Tcp server on', 'port:', app.port, 'status:', tcp.listening);
+});
+```
+
+一共有3个注解:
+
+- `@Description(value: string)` 描述这个类的文案,仅对class生效
+- `@OutputSchema(schema: JSONSchema)` 描述这个方法的输出内容结构,仅对method生效
+- `@InputSchema(schema: JSONSchema)` 描述这个参数的输入内容结构,仅对parameter生效
+
+> 注意: `JSONSchema`: `import { JSONSchema } from 'json-schema-typed';`
