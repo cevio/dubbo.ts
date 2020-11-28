@@ -369,7 +369,12 @@ server.listen().then(tcp => {
 ```ts
 import { queryRegistry } from '@dubbo.ts/swagger';
 // interface:
-queryRegistry(regsitry: TRegistry, group: string = '*', interface?: string, version?: string): string;
+queryRegistry(
+  regsitry: TRegistry, // registry: app.registry
+  group: string = '*', 
+  interface?: string, 
+  version?: string
+): string[];
 ```
 
 **解析资源:**
