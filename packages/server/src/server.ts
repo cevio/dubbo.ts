@@ -64,7 +64,7 @@ export class Server extends Provider<TServerEvents> {
     if (!classInterface) return;
     const classInjectors = classMetadata.meta.got<TClassIndefiner<any>[]>(NAMESPACE.INJECTABLE, []);
     const classGroup = classMetadata.meta.got<string>(NAMESPACE.GROUP, '*');
-    const classVersion = classMetadata.meta.got<string>(NAMESPACE.GROUP, '0.0.0');
+    const classVersion = classMetadata.meta.got<string>(NAMESPACE.VERSION, '0.0.0');
     const classMethods: string[] = [];
     const meta = new TransformMetaData(classInterface, classGroup, classVersion, this.application.port);
     this.emit('collect:class', {
