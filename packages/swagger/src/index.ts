@@ -95,6 +95,6 @@ export function queryRegistry(regsitry: TRegistry, group: string = '*', name?: s
   return regsitry.query(path);
 }
 
-export function parse(str: string) {
+export function parse(str: string): TSwaggerObject {
   return JSON.parse(Buffer.from(str, 'base64').toString());
 }

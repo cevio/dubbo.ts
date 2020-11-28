@@ -363,3 +363,25 @@ server.listen().then(tcp => {
 - `@InputSchema(schema: JSONSchema)` 描述这个参数的输入内容结构,仅对parameter生效
 
 > 注意: `JSONSchema`: `import { JSONSchema } from 'json-schema-typed';`
+
+**查询资源:**
+
+```ts
+import { queryRegistry } from '@dubbo.ts/swagger';
+// interface:
+queryRegistry(regsitry: TRegistry, group: string = '*', interface?: string, version?: string): string;
+```
+
+**解析资源:**
+
+```ts
+import { queryRegistry, parse, TSwaggerObject } from '@dubbo.ts/swagger';
+// interface:
+parse(str: string): TSwaggerObject;
+
+// 只有当版本号资源获取以后才可以用这个方法,否则报错
+// registry: app.registry
+const value = await queryRegistry(registry, '*', 'Com.Node.Dubbo.Test', '0.0.0');
+value.forEach(str => console.log(parse(str));
+//
+```
