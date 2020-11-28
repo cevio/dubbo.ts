@@ -55,7 +55,7 @@ function createPackageFile(dir, project) {
       "dist"
     ],
     "scripts": {
-      "build": "tsc",
+      "build": "rm -rf ./dist && tsc",
     },
     "publishConfig": {
       "access": "public"
