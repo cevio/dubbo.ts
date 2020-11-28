@@ -1,10 +1,29 @@
 import { TRegistry } from "./registry";
+import { createProcessListener, Events } from '@dubbo.ts/utils';
 
 export * from './registry';
 
-export class Application {
+export class Application extends Events<{ unmounted: [], error: [Error] }> {
   private readonly configs = new Map<string, any>();
   public registry: TRegistry;
+  private readonly listener: ReturnType<typeof createProcessListener>;
+  private status: boolean = false;
+
+  constructor() {
+    super();
+    this.listener = createProcessListener(
+      async () => {
+        await this.emitAsync('unmounted');
+      },
+      e => this.emitAsync('error', e)
+    );
+  }
+
+  public notify() {
+    if (this.status) return;
+    this.status = true;
+    this.listener.addProcessListener();
+  }
   
   set port(value: number) {
     this.configs.set('port', value);

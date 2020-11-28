@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { Application } from '@dubbo.ts/application';
-import { createProcessListener, Events } from '@dubbo.ts/utils';
+import { Events } from '@dubbo.ts/utils';
 import { Channel } from './channel';
 import { getFinger, getRegistryFinger } from './finger';
 import { Balance } from './balance';
@@ -13,12 +13,9 @@ export class Consumer<E extends TConsumerEvents = TConsumerEvents> extends Event
   private readonly balance: Balance<E> = new Balance((host, port) => this.connect(host, port));
   private readonly invokers = new Invocation();
   public readonly lifecycle = new Events<E>();
-  private readonly listener = createProcessListener(
-    () => this.close(),
-    e => this.emit('error', e)
-  );
   constructor(public readonly application: Application) {
     super();
+    this.application.on('unmounted', () => this.close());
   }
 
   // 直连模式
@@ -58,7 +55,7 @@ export class Consumer<E extends TConsumerEvents = TConsumerEvents> extends Event
   }
 
   public async launch() {
-    this.listener.addProcessListener();
+    this.application.notify();
     await this.application.onConsumerConnect();
     await this.lifecycle.emitAsync('mounted');
   }

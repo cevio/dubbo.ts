@@ -1,7 +1,7 @@
 import { createServer } from 'net';
 import { EventEmitter } from 'events';
 import { Application } from '@dubbo.ts/application';
-import { createProcessListener, Events } from '@dubbo.ts/utils';
+import { Events } from '@dubbo.ts/utils';
 import { Connection } from './connection';
 
 export type TPoviderEvents = { mounted: [], unmounted: [] };
@@ -10,14 +10,10 @@ export class Provider<E extends TPoviderEvents = TPoviderEvents> extends EventEm
   private readonly connections: Set<Connection<E>> = new Set();
   private readonly tcp = createServer();
   public readonly lifecycle = new Events<E>();
-  private readonly listener = createProcessListener(
-    () => this.close(),
-    e => this.emit('error', e)
-  );
 
   constructor(public readonly application: Application) {
     super();
-
+    this.application.on('unmounted', () => this.close())
     this.tcp.on('listening', () => this.emit('listening'));
     this.tcp.on('error', err => this.emit('error', err));
     this.tcp.on('close', () => this.emit('close'));
@@ -41,7 +37,7 @@ export class Provider<E extends TPoviderEvents = TPoviderEvents> extends EventEm
         resolve();
       })
     });
-    this.listener.addProcessListener();
+    this.application.notify();
     await this.application.onProviderConnect();
     await this.lifecycle.emitAsync('mounted');
     return this.tcp;

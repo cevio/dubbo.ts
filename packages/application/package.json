@@ -17,5 +17,8 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "@dubbo.ts/utils": "^1.0.6"
   }
 }
