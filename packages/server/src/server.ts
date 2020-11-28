@@ -4,13 +4,8 @@ import { AnnotationDependenciesAutoRegister, AnnotationMetaDataScan, TClassIndef
 import { Container } from 'inversify';
 import { Attachment, RESPONSE_STATUS, TDecodeRequestSchema } from '@dubbo.ts/protocol';
 import { NAMESPACE } from './annotation/support/namespace';
-
-export interface TMetaData {
-  classInterface: string,
-  classGroup: string,
-  classVersion: string,
-  classMethods: string[],
-}
+import { TransformMetaData } from './meta';
+import { ParameterMetaCreator } from './annotation';
 
 type TServerEvents = TPoviderEvents & {
   ['runtime:before']: [TDecodeRequestSchema, { target: any, method: string }],
@@ -18,6 +13,7 @@ type TServerEvents = TPoviderEvents & {
 }
 
 export class Server extends Provider<TServerEvents> {
+  public readonly transformMetadatas: TransformMetaData[] = [];
   public readonly container = new Container();
   // interface - group - version: ClassModule
   private readonly modules: Map<string, Map<string, Map<string, TClassIndefiner<any>>>> = new Map();
@@ -70,7 +66,12 @@ export class Server extends Provider<TServerEvents> {
     const classGroup = classMetadata.meta.got<string>(NAMESPACE.GROUP, '*');
     const classVersion = classMetadata.meta.got<string>(NAMESPACE.GROUP, '0.0.0');
     const classMethods: string[] = [];
-    this.emit('collect:class', classModule, classMetadata);
+    const meta = new TransformMetaData(classInterface, classGroup, classVersion, this.application.port);
+    this.emit('collect:class', {
+      metadata: meta.classMetadata,
+      classModule: classModule,
+      annotationClassMetadata: classMetadata,
+    });
     this.injectClassModules(...classInjectors);
     for (const [key, method] of classMetadata.methods) {
       const propertyProxy = method.meta.got<boolean>(NAMESPACE.PROXY, false);
@@ -78,7 +79,26 @@ export class Server extends Provider<TServerEvents> {
       classMethods.push(key);
       const propertyInjectors = method.meta.got<TClassIndefiner<any>[]>(NAMESPACE.INJECTABLE, []);
       this.injectClassModules(...propertyInjectors);
-      this.emit('collect:method', classModule, key, method);
+      const methodMetadata = meta.ensureClassMethod(key);
+      this.emit('collect:method', {
+        classModule: classModule,
+        classMethodName: key,
+        annotationClassMethodMetadata: method,
+        metadata: methodMetadata
+      });
+      const parametersInstance = ParameterMetaCreator.instance(classModule.prototype[key]);
+      if (parametersInstance.size) {
+        parametersInstance.each((value, index) => {
+          const parameterMetadata = meta.ensureClassMethodParameter(key, index);
+          this.emit('collect:paramter', {
+            classModule: classModule,
+            classMethodName: key,
+            classMethodParameterIndex: index,
+            annotationClassMethodParameterValue: value,
+            metadata: parameterMetadata,
+          })
+        })
+      }
     }
     this.setStorageMetaData(classInterface, classGroup, classVersion, classModule);
     if (this.application.registry) {
@@ -87,12 +107,7 @@ export class Server extends Provider<TServerEvents> {
         version: classVersion,
       });
     }
-    this.emit('collect:data', classModule, {
-      classInterface,
-      classGroup,
-      classVersion,
-      classMethods,
-    } as TMetaData);
+    this.transformMetadatas.push(meta);
     return this;
   }
 

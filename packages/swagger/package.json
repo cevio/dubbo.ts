@@ -19,6 +19,11 @@
     "access": "public"
   },
   "dependencies": {
-    "@dubbo.ts/server": "^1.0.9"
+    "@dubbo.ts/server": "^1.0.9",
+    "json-schema-typed": "^7.0.3"
+  },
+  "devDependencies": {
+    "@dubbo.ts/application": "^1.0.4",
+    "@dubbo.ts/zookeeper": "^1.0.15"
   }
 }

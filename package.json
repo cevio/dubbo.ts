@@ -7,7 +7,8 @@
     "test:provider:registry": "ts-node packages/provider/test/registry.ts",
     "test:consumer": "ts-node packages/consumer/test/index.ts",
     "test:consumer:registry": "ts-node packages/consumer/test/registry.ts",
-    "test:server": "ts-node packages/server/test/index.ts"
+    "test:server": "ts-node packages/server/test/index.ts",
+    "test:swagger": "ts-node packages/swagger/test/index.ts"
   },
   "devDependencies": {
     "inquirer": "^7.3.3",

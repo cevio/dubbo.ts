@@ -159,7 +159,7 @@ export class ZooKeeper extends Set<string> implements TRegistry {
     });
   }
   
-  private async create(url: string) {
+  public async create(url: string) {
     const sp = url.split('/');
     let path: string = '';
     for (let i = 1; i < sp.length; i++) {
@@ -182,7 +182,7 @@ export class ZooKeeper extends Set<string> implements TRegistry {
     }
   }
 
-  private async remove(uri: string) {
+  public async remove(uri: string) {
     if (await this.exists(uri)) {
       return await new Promise<void>((resolve, reject) => {
         this.zookeeper.remove(uri, err => {
@@ -193,7 +193,7 @@ export class ZooKeeper extends Set<string> implements TRegistry {
     }
   }
 
-  private query(path: string, watchlistener?: (event: Event) => void) {
+  public query(path: string, watchlistener?: (event: Event) => void) {
     return new Promise<string[]>((resolve, reject) => {
       const callback = (err: Error, children: string[], stat?: Stat) => {
         if (err) return reject(err);

@@ -1,11 +1,9 @@
 import 'reflect-metadata';
 import { MethodMetaCreator } from './methodMetaCreator';
 
-type ParameterHandler<TContext = any, TResult = any> = (ctx: TContext, ...args: any[]) => TResult | Promise<TResult>;
-
 export class ParameterMetaCreator {
   static namespace = Symbol('metadata.parameter.namespace');
-  private readonly stacks: ParameterHandler<any>[] = [];
+  private readonly stacks: Record<string, any>[] = [];
   public parent: MethodMetaCreator;
 
   setParent(value: MethodMetaCreator) {
@@ -16,21 +14,28 @@ export class ParameterMetaCreator {
     return this.stacks.length;
   }
 
-  public set<T = any, R = any>(index: number, callback: ParameterHandler<T, R>) {
-    this.stacks[index] = callback;
+  public set<T = any>(index: number, key: string, value: T) {
+    if (this.stacks[index] === undefined) {
+      this.stacks[index] = {};
+    }
+    this.stacks[index][key] = value;
     return this;
   }
 
-  public get<T = any, R = any>(index: number, ctx?: T, ...args: any[]) {
-    if (typeof this.stacks[index] !== 'function') return;
-    return this.stacks[index](ctx, ...args) as R | Promise<R>;
+  public get(index: number, key?: string) {
+    const chunk = this.stacks[index];
+    if (chunk === undefined) return;
+    if (!key) return chunk;
+    return this.stacks[index][key];
   }
 
-  public exec<T = any, R = any>(ctx: T) {
-    return Promise.all<R>(this.stacks.map(fn => {
-      if (typeof fn === 'function') return Promise.resolve(fn(ctx));
-      return Promise.resolve();
-    }));
+  public each(callback: (value: Record<string, any>, index: number) => void) {
+    this.stacks.forEach(callback);
+    return this;
+  }
+
+  public map<T = any>(callback: (value: Record<string, any>, index: number) => T) {
+    return this.stacks.map(callback);
   }
 
   static instance(obj: Object) {
@@ -44,12 +49,12 @@ export class ParameterMetaCreator {
 		return meta;
   }
   
-  static define<T = any, R = any>(callback: ParameterHandler<T, R>): ParameterDecorator {
+  static define<T = any>(key: string, value: T): ParameterDecorator {
     return (target, property, index) => {
       const clazz = target.constructor.prototype[property];
       if (!clazz) return;
       const meta = ParameterMetaCreator.instance(clazz);
-      meta.set(index, (ctx: T) => callback(ctx));
+      meta.set(index, key, value);
     }
   }
 

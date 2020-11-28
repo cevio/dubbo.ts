@@ -18,7 +18,7 @@ export class Channel<E extends TConsumerEvents = TConsumerEvents> extends EventE
   private tcp: Socket;
   public readonly id: string;
   private readonly pool: Pool;
-  private readonly callbacks = new Callbacks(this);
+  private readonly callbacks: Callbacks<E> = new Callbacks(this);
   public readonly lifecycle = new Events<TChannleEvents>();
   private RECONNECTING = false;
   constructor(

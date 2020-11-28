@@ -1,6 +1,7 @@
 import { TDecodeResponseSchema } from '@dubbo.ts/protocol';
 import { Channel } from './channel';
-export class Callbacks extends Map<number, [(data: any) => void, (e: Error) => void]> {
+import { TConsumerEvents } from './consumer';
+export class Callbacks<E extends TConsumerEvents = TConsumerEvents> extends Map<number, [(data: any) => void, (e: Error) => void]> {
   private id = 0;
   private connectCode: 0 | 1 | 2 | 3 = 0;
   private error: Error;
@@ -9,7 +10,7 @@ export class Callbacks extends Map<number, [(data: any) => void, (e: Error) => v
     reject: (e: Error) => void,
   }> = new Set();
 
-  constructor(private readonly channel: Channel) {
+  constructor(private readonly channel: Channel<E>) {
     super();
   }
 

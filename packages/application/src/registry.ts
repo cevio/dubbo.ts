@@ -8,4 +8,7 @@ export interface TRegistry {
   onConsumerConnect(): Promise<void>;
   onConsumerDisconnect(): Promise<void>;
   addService(name: string, methods: string[], options: { group?: string, version?: string }): any;
+  create(url: string): Promise<void>;
+  remove(uri: string): Promise<void>;
+  query(path: string): Promise<string[]>;
 }
