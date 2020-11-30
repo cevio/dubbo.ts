@@ -1,6 +1,6 @@
 {
   "name": "@dubbo.ts/application",
-  "version": "1.0.7",
+  "version": "2.0.0",
   "description": "dubbo application module",
   "author": "",
   "homepage": "https://github.com/cevio/dubbo.ts",
@@ -19,7 +19,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@dubbo.ts/protocol": "^1.0.10",
-    "@dubbo.ts/utils": "^1.0.6"
+    "@dubbo.ts/protocol": "^2.0.0",
+    "@dubbo.ts/utils": "^2.0.0"
   }
 }
