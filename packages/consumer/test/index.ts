@@ -13,9 +13,11 @@ app.heartbeat = 600000;
 
 consumer.launch();
 
-consumer.on('disconnect', () => console.log('server disconnect'));
-consumer.on('connect', () => console.log('server connected'));
-consumer.on('error', e => console.error(e));
+consumer.on('disconnect', async (conn) => console.log('server disconnect', conn.id));
+consumer.on('connect', async (conn) => console.log('server connected', conn.id));
+consumer.on('reconnect', async (conn) => console.log('server connected', conn.id));
+consumer.on('error', async e => console.error(e));
+consumer.on('channels', async url => console.log('channels:', url.map(u => u.host)));
 
 createServer((req, res) => {
   if (req.url === '/favicon.ico') {

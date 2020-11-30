@@ -2,42 +2,39 @@ import { getFinger } from "./finger";
 import { Socket, createConnection } from 'net';
 import { EventEmitter } from 'events';
 import { Pool, TDecodeResponseSchema } from '@dubbo.ts/protocol';
-import { Consumer, TConsumerEvents } from "./consumer";
+import { Consumer } from "./consumer";
 import { Callbacks } from './callbacks';
 import { Request, Attachment } from '@dubbo.ts/protocol';
-import { Events } from '@dubbo.ts/utils';
+import { TConsumerChannel } from '@dubbo.ts/application';
 
 const Retry = require('promise-retry');
 
-type TChannleEvents = {
-  mounted: [],
-  unmounted: [],
-}
-
-export class Channel<E extends TConsumerEvents = TConsumerEvents> extends EventEmitter {
+export class Channel extends EventEmitter implements TConsumerChannel {
   private tcp: Socket;
   public readonly id: string;
   private readonly pool: Pool;
-  private readonly callbacks: Callbacks<E> = new Callbacks(this);
-  public readonly lifecycle = new Events<TChannleEvents>();
+  private callbacks: Callbacks = new Callbacks(this);
   private RECONNECTING = false;
+  public count = 0;
   constructor(
-    private readonly host: string, 
-    private readonly port: number, 
-    public readonly consumer: Consumer<E>
+    public readonly host: string, 
+    public readonly port: number, 
+    public readonly consumer: Consumer
   ) {
     super();
     this.id = getFinger(host, port);
     this.pool = new Pool(this.consumer.application.heartbeat, buf => this.tcp.write(buf));
     this.pool.on('response', (data: TDecodeResponseSchema) => this.callbacks.resolveResponse(data));
-    this.pool.on('heartbeat:timeout', () => this.reconnect());
+    this.pool.on('heartbeat:timeout', () => this.consumer.emitAsync('heartbeat:timeout').then(() => this.reconnect()));
+    this.pool.on('heartbeat', () => this.consumer.emit('heartbeat'));
   }
 
-  public async reconnect() {
+  private async reconnect() {
     this.RECONNECTING = true;
     await this.close();
     await this.retryConnect();
     this.RECONNECTING = false;
+    await this.consumer.emitAsync('reconnect', this);
   }
 
   private async retryConnect() {
@@ -48,8 +45,8 @@ export class Channel<E extends TConsumerEvents = TConsumerEvents> extends EventE
   }
 
   private async connect() {
-    const tcp = createConnection({ host: this.host, port: this.port });
     await new Promise<void>((resolve, reject) => {
+      const tcp = this.tcp = createConnection({ host: this.host, port: this.port });
       const errorListener = (err: Error) => {
         tcp.removeListener('error', errorListener);
         reject(err);
@@ -61,31 +58,49 @@ export class Channel<E extends TConsumerEvents = TConsumerEvents> extends EventE
         tcp.on('error', e => this.consumer.emit('error', e));
         tcp.on('end', () => {
           if (!this.RECONNECTING) {
-            this.close(true).then(() => this.consumer.deleteChannel(this))
+            this.close(true)
+              .then(() => this.consumer.deleteChannel(this))
+              .catch(e => this.consumer.emitAsync('error', e));
           }
         });
         this.pool.startHeartBeat();
-        this.consumer.emit('connect', this);
         resolve();
       });
     });
-    await this.lifecycle.emitAsync('mounted');
-    this.tcp = tcp;
+    await this.consumer.emitAsync('connect', this);
   }
 
-  public async execute(name: string, method: string, args: any[], options: {
+  public async close(passive?: boolean) {
+    this.pool.close();
+    try{
+      !passive && await new Promise<void>((resolve) => this.tcp.end(resolve));
+    } catch(e) {}
+    this.emit('disconnect');
+    await this.consumer.emitAsync('disconnect', this);
+  }
+
+  public async execute<T = any>(name: string, method: string, args: any[], options: {
     version?: string,
     group?: string,
   } = {}) {
+    this.count = this.count + 1;
     await this.retryConnect();
 
     const version = options.version || '0.0.0';
     const group = options.group || '*';
     const id = this.callbacks.createIndex();
 
-    return await new Promise((resolve, reject) => {
+    return await new Promise<T>((resolve, reject) => {
       const req = new Request();
       const attchment = new Attachment();
+      const _resolve = (data: T) => {
+        this.count = this.count - 1;
+        resolve(data);
+      };
+      const _reject = (e: any) => {
+        this.count = this.count - 1;
+        reject(e);
+      };
       attchment.setMethodName(method);
       attchment.setParameters(args);
       attchment.setAttachment(Attachment.GROUP_KEY, group);
@@ -96,18 +111,9 @@ export class Channel<E extends TConsumerEvents = TConsumerEvents> extends EventE
       req.setRequestId(id);
       req.setTwoWay(true);
       req.setData(attchment);
-      this.callbacks.createRequestTask(id, resolve, reject, this.consumer.application.timeout);
+      this.callbacks.createRequestTask(id, _resolve, _reject, this.consumer.application.timeout);
       this.pool.putWriteBuffer(req.value());
     })
   }
-
-  public async close(passive?: boolean) {
-    this.pool.close();
-    await this.lifecycle.emitAsync('unmounted');
-    try{
-      !passive && await new Promise<void>((resolve) => this.tcp.end(resolve));
-    } catch(e) {}
-    this.emit('disconnect');
-    this.consumer.emit('disconnect', this);
-  }
+  
 }

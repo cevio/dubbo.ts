@@ -1,6 +1,6 @@
 import { Application } from '@dubbo.ts/application';
 import { ZooKeeper } from '@dubbo.ts/zookeeper';
-import { Connection, Provider } from '../src';
+import { Provider } from '../src';
 
 const app = new Application();
 const provider = new Provider(app);
@@ -13,16 +13,17 @@ app.version = '2.0.2';
 app.heartbeat = 600000;
 app.port = 8081;
 
+app.useProvider(provider);
 app.useRegistry(registry);
 
-registry.addService('com.mifa.stib.factory', ['use']);
+registry.addProviderService('com.mifa.stib.factory', ['use']);
 
-provider.on('connect', () => console.log('client connected'));
-provider.on('disconnect', () => console.log('client disconnect'))
-provider.on('listening', () => console.log(' - Tcp connection is listening'));
-provider.on('error', (e) => console.error(e));
-provider.on('close', () => console.log('\n - Tcp closed'));
-provider.on('data', (reply: ReturnType<Connection['createExecution']>) => {
+provider.on('connect', async () => console.log(' + [Provider]', 'client connected'));
+provider.on('disconnect', async () => console.log(' - [Provider]', 'client disconnect'));
+provider.on('error', async (e) => console.error(' x [provider]', e));
+provider.on('start', async () => console.log(' @ [Provider]', 'started'));
+provider.on('stop', async () => console.log(' @ [Provider]', 'stoped'));
+provider.on('data', async (reply) => {
   reply(async (schema, status) => {
     return {
       status: status.OK,
@@ -31,8 +32,12 @@ provider.on('data', (reply: ReturnType<Connection['createExecution']>) => {
       }
     }
   })
-})
-provider.listen().then(tcp => {
-  console.log(' - Tcp server on', 'port:', 8081, 'status:', tcp.listening);
 });
+
+registry.on('node:create', async node => console.log(' + [registry]', node));
+registry.on('node:remove', async node => console.log(' - [registry]', node));
+registry.on('start', async () => console.log(' @ [registry]', 'started'));
+registry.on('stop', async () => console.log(' @ [registry]', 'stoped'));
+
+app.start();
 

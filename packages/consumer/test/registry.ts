@@ -17,13 +17,22 @@ app.retries = 3;
 app.heartbeat = 600000;
 
 app.useRegistry(registry);
+app.useConsumer(consumer);
 
-consumer.launch();
+consumer.on('start', async () => console.log(' + [consumer]', 'started'))
+consumer.on('stop', async () => console.log(' - [consumer]', 'stoped'))
+consumer.on('disconnect', async () => console.log(' - [consumer]', 'server disconnect'));
+consumer.on('connect', async () => console.log(' + [consumer]', 'server connected'));
+consumer.on('reconnect', async () => console.log(' # [consumer]', 'server reconnected'));
+consumer.on('error', async e => console.error(' ! [consumer]', e));
+consumer.on('channels', async result => console.log(' $ [consumer]', result.map((res: any) => res.host)));
+consumer.on('heartbeat', async () => console.log(' @ [heartbeat]', 'send'))
+consumer.on('heartbeat:timeout', async () => console.log(' @ [heartbeat]', 'timeout'));
 
-consumer.on('disconnect', () => console.log('server disconnect'));
-consumer.on('connect', () => console.log('server connected'));
-consumer.on('error', e => console.error(e));
-consumer.on('channels', result => console.log('get channels:', result.map((res: any) => res.host)));
+registry.on('start', async () => console.log(' + [registry]', 'started'));
+registry.on('stop', async () => console.log(' - [registry]', 'stoped'));
+registry.on('node:create', async node => console.log(' + [registry]', 'create node:', node));
+registry.on('node:remove', async node => console.log(' - [registry]', 'remove node:', node));
 
 createServer((req, res) => {
   if (req.url === '/favicon.ico') {
@@ -34,15 +43,17 @@ createServer((req, res) => {
     res.statusCode = 200;
     res.end(JSON.stringify(data));
   }).catch(e => {
+    console.log(e)
     res.statusCode = 500;
     res.end(e.message);
   })
 }).listen(9001, () => {
   console.log('start at 9001');
+  app.start();
 });
 
 async function run() {
-  const client = await consumer.invoke('com.mifa.stib.factory', {});
+  const client = await registry.invoke('com.mifa.stib.factory', {});
   const name = 'com.mifa.stib.factory';
   const method = 'use';
   const args = [java.combine('com.mifa.stib.common.RpcData', {

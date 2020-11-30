@@ -1,28 +1,48 @@
-import { TRegistry } from "./registry";
 import { createProcessListener, Events } from '@dubbo.ts/utils';
+import { TProvider, TProviderBaseEvents } from "./provider";
+import { TConsumer, TConsumerBaseEvents } from "./consumer";
+import { TRegistry, TRegistryBaseEvents } from './registry';
 
 export * from './registry';
+export * from './provider';
+export * from './consumer';
 
-export class Application extends Events<{ unmounted: [], error: [Error] }> {
+export class Application extends Events<{ 
+  mounted: [], 
+  unmounted: [],
+  start: [], 
+  stop: [],
+  error: [Error],
+  ['provider:start']: [TProvider<any>],
+  ['provider:stop']: [TProvider<any>],
+  ['consumer:start']: [TConsumer<any>],
+  ['consumer:stop']: [TConsumer<any>],
+  ['registry:start']: [TRegistry<any>],
+  ['registry:stop']: [TRegistry<any>],
+}> {
   private readonly configs = new Map<string, any>();
-  public registry: TRegistry;
   private readonly listener: ReturnType<typeof createProcessListener>;
-  private status: boolean = false;
+  public registry: TRegistry<any>;
+  public provider: TProvider<any>;
+  public consumer: TConsumer<any>;
 
   constructor() {
     super();
     this.listener = createProcessListener(
-      async () => {
-        await this.emitAsync('unmounted');
-      },
+      () => this.stop(),
       e => this.emitAsync('error', e)
     );
   }
 
-  public notify() {
-    if (this.status) return;
-    this.status = true;
+  async start() {
+    await this.emitAsync('mounted');
     this.listener.addProcessListener();
+    await this.emitAsync('start');
+  }
+
+  async stop() {
+    await this.emitAsync('unmounted');
+    await this.emitAsync('stop');
   }
   
   set port(value: number) {
@@ -117,49 +137,36 @@ export class Application extends Events<{ unmounted: [], error: [Error] }> {
     return this.configs.has('retries') ? Number(this.configs.get('retries')) : 3;
   }
 
-  public onProviderConnect() {
-    if (this.registry) {
-      return this.registry.onProviderPublish();
-    }
-  }
-
-  public onProviderDisconnect() {
-    if (this.registry) {
-      return this.registry.onProviderUnPublish();
-    }
-  }
-
-  public onConsumerRegister(name: string, options: { group?: string, version?: string }) {
-    if (this.registry) {
-      return this.registry.onConsumerRegister(name, options);
-    }
-  }
-
-  public onConsumerUnRegister(mark: any) {
-    if (this.registry) {
-      return this.registry.onConsumerUnRegister(mark);
-    }
-  }
-
-  public onConsumerQuery(name: string, options: { group?: string, version?: string }) {
-    if (!this.registry) throw new Error('non-registry started, cannot find the node from zookeeper.');
-    return this.registry.onConsumerQuery(name, options);
-  }
-
-  public onConsumerConnect() {
-    if (this.registry) {
-      return this.registry.onConsumerConnect();
-    }
-  }
-
-  public async onConsumerDisconnect() {
-    if (this.registry) {
-      return await this.registry.onConsumerDisconnect();
-    }
-  }
-
-  public useRegistry<T extends TRegistry>(registry: T) {
+  public useRegistry<T extends TRegistryBaseEvents>(registry: TRegistry<T>) {
     this.registry = registry;
-    return registry;
+    registry.on('start', () => this.emitAsync('registry:start', registry));
+    registry.on('stop', async () => {
+      const registry = this.registry;
+      this.registry = null;
+      await this.emitAsync('registry:stop', registry);
+    })
+    return this;
+  }
+
+  public useProvider<T extends TProviderBaseEvents>(provider: TProvider<T>) {
+    this.provider = provider;
+    provider.on('start', () => this.emitAsync('provider:start', provider));
+    provider.on('stop', async () => {
+      const provider = this.provider;
+      this.provider = null;
+      await this.emitAsync('provider:stop', provider);
+    });
+    return this;
+  }
+
+  public useConsumer<T extends TConsumerBaseEvents>(consumer: TConsumer<T>) {
+    this.consumer = consumer;
+    consumer.on('start', () => this.emitAsync('consumer:start', consumer));
+    consumer.on('stop', async () => {
+      const consumer = this.consumer;
+      this.consumer = null;
+      await this.emitAsync('consumer:stop', consumer);
+    })
+    return this;
   }
 }

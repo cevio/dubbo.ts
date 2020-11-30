@@ -47,7 +47,7 @@ export function useSwagger(server: Server) {
   server.on('collect:class', TransformClass);
   server.on('collect:method', TransformClassMethod);
   server.on('collect:paramter', TransformClassMethodParameter);
-  server.lifecycle.on('mounted', async () => {
+  server.application.on('mounted', async () => {
     for (let i = 0; i < server.transformMetadatas.length; i++) {
       const transform = server.transformMetadatas[i];
       const classMetadata = transform.classMetadata;
@@ -78,7 +78,7 @@ export function useSwagger(server: Server) {
     //   console.log(parse(str));
     // })
   });
-  server.lifecycle.on('unmounted', async () => {
+  server.application.on('unmounted', async () => {
     const registry = server.application.registry;
     if (!registry) throw new Error('you must use Registry first.');
     for (let i = 0; i < paths.length; i++) {

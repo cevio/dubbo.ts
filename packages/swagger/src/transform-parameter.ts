@@ -2,7 +2,7 @@ import { JSONSchema } from 'json-schema-typed';
 import { TClassIndefiner, TTransformMehtodParameter } from "@dubbo.ts/server";
 import { inputSchemaNameSpace } from './annotations';
 
-export function TransformClassMethodParameter(options: {
+export async function TransformClassMethodParameter(options: {
   classModule: TClassIndefiner<any>,
   classMethodName: string,
   classMethodParameterIndex: number,

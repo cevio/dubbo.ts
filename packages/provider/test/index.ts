@@ -1,5 +1,5 @@
 import { Application } from '@dubbo.ts/application';
-import { Connection, Provider } from '../src';
+import { Provider } from '../src';
 
 const app = new Application();
 const provider = new Provider(app);
@@ -8,13 +8,17 @@ app.version = '2.0.2';
 app.heartbeat = 600000;
 app.port = 8081;
 
-provider.on('connect', () => console.log('client connected'));
-provider.on('disconnect', () => console.log('client disconnect'))
-provider.on('listening', () => console.log(' - Tcp connection is listening'));
-provider.on('error', (e) => console.error(e));
-provider.on('close', () => console.log('\n - Tcp closed'));
-provider.on('data', (reply: ReturnType<Connection['createExecution']>) => {
+app.on('error', async e => console.log(e));
+
+provider.on('connect', async () => console.log('client connected'));
+provider.on('disconnect', async () => console.log('client disconnect'))
+provider.on('error', async (e) => console.error(e));
+provider.on('start', async () => console.log('tcp started'));
+provider.on('stop', async () => console.log('tcp stoped'));
+
+provider.on('data', async (reply) => {
   reply(async (schema, status) => {
+    // console.log('schema', schema);
     return {
       status: status.OK,
       data: {
@@ -23,7 +27,5 @@ provider.on('data', (reply: ReturnType<Connection['createExecution']>) => {
     }
   })
 })
-provider.listen().then(tcp => {
-  console.log(' - Tcp server on', 'port:', 8081, 'status:', tcp.listening);
-});
 
+app.start();

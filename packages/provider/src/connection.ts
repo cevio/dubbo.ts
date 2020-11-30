@@ -1,22 +1,20 @@
 import { Socket } from 'net';
-import { EventEmitter } from 'events';
-import { Provider, TPoviderEvents } from "./provider";
+import { Provider, TProviderEvents } from "./provider";
 import { Pool, TDecodeRequestSchema, RESPONSE_STATUS, Response, Attachment } from '@dubbo.ts/protocol';
 
 export type TProviderReply = ReturnType<Connection['createExecution']>;
 
-export class Connection<E extends TPoviderEvents = TPoviderEvents> extends EventEmitter {
+export class Connection {
   private readonly pool: Pool;
   constructor(
-    public readonly provider: Provider<E>, 
+    public readonly provider: Provider, 
     private readonly socket: Socket
   ) {
-    super();
-
     this.pool = new Pool(this.provider.application.heartbeat, buf => this.socket.write(buf));
     this.socket.on('data', buf => this.pool.putReadBuffer(buf));
     this.pool.on('request', (schema: TDecodeRequestSchema) => this.provider.emit('data', this.createExecution(schema)));
-    this.pool.on('heartbeat:timeout', () => this.socket.end());
+    this.pool.on('heartbeat:timeout', () => this.provider.emitAsync('heartbeat:timeout').then(() => this.socket.end()));
+    this.pool.on('heartbeat', () => this.provider.emit('heartbeat'));
     this.pool.startHeartBeat();
   }
 
@@ -40,9 +38,6 @@ export class Connection<E extends TPoviderEvents = TPoviderEvents> extends Event
     const attchment = new Attachment();
     attchment.setAttachment(Attachment.DUBBO_VERSION_KEY, this.provider.application.version);
     attchment.setAttachment(Attachment.TIMESTAMP_KEY, Date.now());
-    // attchment.setAttachment(Attachment.INTERFACE_KEY, schema.interface);
-    // attchment.setAttachment(Attachment.PATH_KEY, schema.interface);
-    // attchment.setAttachment(Attachment.PID_KEY, this.provider.application.pid);
     res.setRequestId(schema.id);
     res.setStatusCode(status);
     res.setData(attchment, data);

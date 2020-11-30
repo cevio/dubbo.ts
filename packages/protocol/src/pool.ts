@@ -80,6 +80,7 @@ export class Pool extends EventEmitter {
         req.setEvent(Request.HEARTBEAT_EVENT);
         // 发送心跳
         this.putWriteBuffer(req.value());
+        this.emit('heartbeat');
       }
       if (now - this._LASTREAD_TIMESTAMP > this.HEARTBEAT_TIME * 3) {
         this.emit('heartbeat:timeout');

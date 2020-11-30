@@ -18,6 +18,7 @@
 - [@dubbo.ts/utils](https://npmjs.com/@dubbo.ts/utils) 辅助函数模块
 - [@dubbo.ts/zookeeper](https://npmjs.com/@dubbo.ts/zookeeper) ZooKeeper注册中心模块
 - [@dubbo.ts/server](https://npmjs.com/@dubbo.ts/server) 注解式服务端写法模块
+- [@dubbo.ts/swagger](https://npmjs.com/@dubbo.ts/swagger) 分布式swagger方案
 
 ## Performance
 
@@ -36,6 +37,7 @@ app.timeout = 10000;
 app.retries = 3;
 app.heartbeat = 600000;
 // ...
+app.start();
 ```
 
 参数定义如下：
@@ -63,6 +65,7 @@ import { ZooKeeper } from '@dubbo.ts/zookeeper';
 const registry = new ZooKeeper(app, {
   host: '127.0.0.1'
 });
+app.useRegistry(registry);
 ```
 
 `ZooKeeper`目前采用的库是 [node-zookeeper-client](https://www.npmjs.com/package/node-zookeeper-client)。除`host`参数指定注册中心地址外，其他参数参考[这里](https://www.npmjs.com/package/node-zookeeper-client#client-createclientconnectionstring-options)。
@@ -77,21 +80,53 @@ const registry = new ZooKeeper(app, {
  *   configs?: { version?: string, group?: string }
  * )
  */
-registry.addService('com.mifa.stib.factory', ['use']);
+registry.addProviderService('com.mifa.stib.factory', ['use']);
 ```
 
-### Custom Match
+调用远程方法
+
+```ts
+/**
+ * interface: string, 
+ * method: string, 
+ * args: any[],
+ * configs?: { version?: string, group?: string }
+ */
+const client = await registry.invoke(interface, configs);
+const result = await client.execute(interface, method, args, configs);
+```
+
+`registry.invoke`主要是用来从注册中心查询资源后得到`host`与`port`来实例化一个直连的clinent对象。它不会重复创建实例，而是缓存已有的实例。不必担心每次调用都是实例化的问题。
+
+`registry.invoke`的`interface`与 `client.execute` 的 `interface` 是同一个，这样做仅仅是 `consumer.invoke` 来获取注册中心的资源，而`client.execute`才是真正执行的参数。
+
+注意: `args`参数必须是一个特定的解构，可以通过[js-to-java](https://npmjs.com/js-to-java)查看使用。
+
+
+```ts
+const java = require('js-to-java');
+const args = [java.combine('com.mifa.stib.common.RpcData', {
+    data: {"name":"gxh","age":"18","word":""},
+    headers: {
+      appName: 'dist',
+      platform: 1,
+      equipment: 1,
+    },
+    user: {
+      id: 1
+    },
+  }
+)];
+```
+
+### Registry Filter
 
 自定义zookeeper资源的匹配规则，返回一个布尔值。
 
 ```ts
-import { Attachment } from '@dubbo.ts/protocol';
-registry.setChannelMatcher((uri, options) => {
-  const interfaceMatched = uri.query[Attachment.INTERFACE_KEY] === options.interface || uri.query[Attachment.PATH_KEY] === options.interface;
-  const groupMatched = options.group === '*' ? true : (uri.query[Attachment.GROUP_KEY] === options.group);
-  const versionMatched = options.version === '0.0.0' ? true : uri.query[Attachment.VERSION_KEY] === options.version;
-  if (interfaceMatched && groupMatched && versionMatched) return true;
-  return false;
+registry.addFilter((uri: UrlWithParsedQuery) => {
+   // ...
+   return true || false;
 })
 ```
 
@@ -102,12 +137,15 @@ registry.setChannelMatcher((uri, options) => {
 ```ts
 import { Connection, Provider } from '@dubbo.ts/provider';
 const provider = new Provider(app);
-provider.on('connect', () => console.log('client connected'));
-provider.on('disconnect', () => console.log('client disconnect'))
-provider.on('listening', () => console.log(' - Tcp connection is listening'));
-provider.on('error', (e) => console.error(e));
-provider.on('close', () => console.log('\n - Tcp closed'));
-provider.on('data', (reply: ReturnType<Connection['createExecution']>) => {
+app.useProvider(provider);
+provider.on('connect', async () => console.log(' + [Provider]', 'client connected'));
+provider.on('disconnect', async () => console.log(' - [Provider]', 'client disconnect'));
+provider.on('error', async (e) => console.error(' x [provider]', e));
+provider.on('start', async () => console.log(' @ [Provider]', 'started'));
+provider.on('stop', async () => console.log(' @ [Provider]', 'stoped'));
+provider.on('heartbeat', async () => console.log(' @ [heartbeat]', '[provider]', 'send'));
+provider.on('heartbeat:timeout', async () => console.log(' @ [heartbeat]', '[provider]', 'timeout'))
+provider.on('data', (reply) => {
   reply(async (schema, status) => {
     return {
       status: status.OK,
@@ -117,14 +155,8 @@ provider.on('data', (reply: ReturnType<Connection['createExecution']>) => {
     }
   })
 })
-provider.listen().then(tcp => {
-  console.log(' - Tcp server on', 'port:', 8081, 'status:', tcp.listening);
-});
+app.start();
 ```
-
-### Provider.listen
-
-启动服务。它是一个`Promise`，没有任何参数。启动的端口，它将自动从`application`中获取。
 
 ### Provider Events
 
@@ -140,22 +172,30 @@ provider.listen().then(tcp => {
   import { Connection } from '@dubbo.ts/provider';
   provider.on('disconnect', (connection: Connection) => {});
   ```
-- `listening` TCP连接正在启动的时候触发该事件。
-  ```ts
-  provider.on('listening', () => console.log(' - Tcp connection is listening'));
-  ```
 - `error` 服务出错触发该事件，接受一个错误对象。
   ```ts
   provider.on('error', (e) => console.error(e));
   ```
-- `close` TCP服务关闭时候触发该事件。
+- `start` 服务启动。
   ```ts
-  provider.on('close', () => console.log('\n - Tcp closed'));
+  provider.on('start', () => console.log('start'));
+  ```
+- `stop` 服务停止。
+  ```ts
+  provider.on('stop', () => console.log('stop'));
+  ```
+- `heartbeat` 发送心跳。
+  ```ts
+  provider.on('heartbeat', () => console.log('heartbeat'));
+  ```
+- `heartbeat:timeout` 心跳超时。
+  ```ts
+  provider.on('heartbeat:timeout', () => console.log('heartbeat:timeout'));
   ```
 - `data` 处理由客户端传入数据的事件，也是核心事件。通过这个事件可以对当前传入参数做自定义处理。参数为一个reply，主要用于对数据返回处理的一个包裹函数。
   ```ts
   import { Connection } from '@dubbo.ts/provider';
-  provider.on('data', (reply: ReturnType<Connection['createExecution']>) => {
+  provider.on('data', (reply) => {
     reply(async (schema, status) => {
       /**
        * schema 参数如下:
@@ -186,7 +226,17 @@ provider.listen().then(tcp => {
 ```ts
 import { Consumer } from '@dubbo.ts/consumer';
 const consumer = new Consumer(app);
-consumer.launch();
+app.useConsumer(consumer);
+consumer.on('start', async () => console.log(' + [consumer]', 'started'))
+consumer.on('stop', async () => console.log(' - [consumer]', 'stoped'))
+consumer.on('disconnect', async () => console.log(' - [consumer]', 'server disconnect'));
+consumer.on('connect', async () => console.log(' + [consumer]', 'server connected'));
+consumer.on('reconnect', async () => console.log(' # [consumer]', 'server reconnected'));
+consumer.on('error', async e => console.error(' ! [consumer]', e));
+consumer.on('channels', async result => console.log(' $ [consumer]', result.map((res: any) => res.host)));
+consumer.on('heartbeat', async () => console.log(' @ [heartbeat]', '[consumer]', 'send'))
+consumer.on('heartbeat:timeout', async () => console.log(' @ [heartbeat]', '[consumer]', 'timeout'));
+app.start();
 ```
 
 ### Consumer Connect
@@ -199,37 +249,8 @@ const client = consumer.connect('127.0.0.1', 8081);
 const result = await client.execute(interface, method, args, configs);
 ```
 
-注册中心
+注册中心见registry中的invoke函数。
 
-```ts
-// consumer.invoke(inteface: string, configs?: { version?: string, group?: string });
-// version: default value: 0.0.0
-// group: default value: *
-const client = await consumer.invoke(interface, {});
-const result = await client.execute(interface, method, args, configs);
-```
-
-`consumer.invoke`主要是用来从注册中心查询资源后得到`host`与`port`来实例化一个直连的clinent对象。它不会重复创建实例，而是缓存已有的实例。不必担心每次调用都是实例化的问题。
-
-`consumer.invoke`的`interface`与 `client.execute` 的 `interface` 是同一个，这样做仅仅是 `consumer.invoke` 来获取注册中心的资源，而`client.execute`才是真正执行的参数。
-
-注意: `args`参数必须是一个特定的解构，可以通过[js-to-java](https://npmjs.com/js-to-java)查看使用。
-
-```ts
-const java = require('js-to-java');
-const args = [java.combine('com.mifa.stib.common.RpcData', {
-    data: {"name":"gxh","age":"18","word":""},
-    headers: {
-      appName: 'dist',
-      platform: 1,
-      equipment: 1,
-    },
-    user: {
-      id: 1
-    },
-  }
-)];
-```
 
 ### Consumer Events
 
@@ -245,13 +266,34 @@ const args = [java.combine('com.mifa.stib.common.RpcData', {
   import { Channel } from '@dubbo.ts/consumer';
   consumer.on('disconnect', (channel: Channel) => {});
   ```
+- `reconnect` 与服务端发生重连的事件
+  ```ts
+  import { Channel } from '@dubbo.ts/consumer';
+  consumer.on('reconnect', (channel: Channel) => {});
+  ```
 - `error` 服务出错触发该事件，接受一个错误对象。
   ```ts
   consumer.on('error', (e) => console.error(e));
   ```
+- `start` client启动。
+  ```ts
+  consumer.on('start', (e) => console.log('start'));
+  ```
+- `stop` client启动。
+  ```ts
+  consumer.on('stop', (e) => console.log('stop'));
+  ```
 - `channels` 当从注册中心获取到数据后触发该事件，参数为所有有效匹配解构的URL序列化对象。
   ```ts
   consumer.on('channels', result => console.log('get channels:', result.map((res: any) => res.host)));
+  ```
+- `heartbeat` 发送心跳。
+  ```ts
+  consumer.on('heartbeat', () => console.log('heartbeat'));
+  ```
+- `heartbeat:timeout` 心跳超时。
+  ```ts
+  consumer.on('heartbeat:timeout', () => console.log('heartbeat:timeout'));
   ```
 
 ## Annotation Server
@@ -259,57 +301,59 @@ const args = [java.combine('com.mifa.stib.common.RpcData', {
 结合IOC理念,我们使用`inversify`来解构我们的开发,从而产生了基于注解式的服务写法,类似java中的注解写法,以便开发者能够快速开发应用.
 
 ```ts
-import { Application } from '@dubbo.ts/application';
-import { Server, Service, Proxy, Version, Group, inject } from '@dubbo.ts/server';
+iimport { ZooKeeper } from '@dubbo.ts/zookeeper';
+import { Server, Service, Proxy } from '@dubbo.ts/server';
 
 @Service('Com.Node.Dubbo.Test')
-// @Version('1.0.0')
-// @Group('development')
 class Test {
-  @inject(SomeOtherModule) private readonly SomeOtherModule: SomeOtherModule;
   @Proxy()
   public sum(a: number, b: number) {
-    return a + b + this.SomeOtherModule.sum(a, b);
+    return a + b;
   }
 }
 
-const app = new Application();
-const server = new Server(app);
-
+const server = new Server();
+const app = server.application;
+const provider = server.provider;
+const consumer = server.consumer;
+const registry = new ZooKeeper(app, { host: '127.0.0.1' });
 app.application = '测试';
 app.port = 6000;
-
+app.heartbeat = 3000;
+app.useRegistry(registry);
 server.addService(Test);
 
-server.listen().then(tcp => {
-  console.log(' - Tcp server on', 'port:', app.port, 'status:', tcp.listening);
+provider.on('connect', async () => console.log(' + [Provider]', 'client connected'));
+provider.on('disconnect', async () => console.log(' - [Provider]', 'client disconnect'));
+provider.on('error', async (e) => console.error(' x [provider]', e));
+provider.on('start', async () => console.log(' @ [Provider]', 'started'));
+provider.on('stop', async () => console.log(' @ [Provider]', 'stoped'));
+provider.on('heartbeat', async () => console.log(' @ [heartbeat]', '[provider]', 'send'));
+provider.on('heartbeat:timeout', async () => console.log(' @ [heartbeat]', '[provider]', 'timeout'))
+
+consumer.on('start', async () => console.log(' + [consumer]', 'started'))
+consumer.on('stop', async () => console.log(' - [consumer]', 'stoped'))
+consumer.on('disconnect', async () => console.log(' - [consumer]', 'server disconnect'));
+consumer.on('connect', async () => console.log(' + [consumer]', 'server connected'));
+consumer.on('reconnect', async () => console.log(' # [consumer]', 'server reconnected'));
+consumer.on('error', async e => console.error(' ! [consumer]', e));
+consumer.on('channels', async result => console.log(' $ [consumer]', result.map((res: any) => res.host)));
+consumer.on('heartbeat', async () => console.log(' @ [heartbeat]', '[consumer]', 'send'))
+consumer.on('heartbeat:timeout', async () => console.log(' @ [heartbeat]', '[consumer]', 'timeout'));
+
+registry.on('start', async () => console.log(' + [registry]', 'started'));
+registry.on('stop', async () => console.log(' - [registry]', 'stoped'));
+registry.on('node:create', async node => console.log(' + [registry]', 'create node:', node));
+registry.on('node:remove', async node => console.log(' - [registry]', 'remove node:', node));
+
+// server.on('runtime:before', async (schema, { target, method }) => console.log(' + [server]', schema))
+
+server.listen().then(() => {
+  console.log(' - Tcp server on', 'port:', app.port);
 });
 ```
 
 > 只有被`@Proxy()`标记过的函数才能被微服务调用.因为我们本来就应该考虑只有公共函数才被调用,而私有函数肯定不希望被调用.通过这个注解我们可以达到这个目的.
-
-**Lifecycles:**
-
-- `runtime:before` 运行时前置任务周期
-  ```ts
-  import { TDecodeRequestSchema } from '@dubbo.ts/protocol';
-  server.lifecycle.on('runtime:before', (schema: TDecodeRequestSchema, options: { target: any, method: string }) => {});
-  ```
-- `runtime:after` 运行时后置任务周期
-  ```ts
-  import { TDecodeRequestSchema } from '@dubbo.ts/protocol';
-  server.lifecycle.on('runtime:after', (schema: TDecodeRequestSchema, result: any) => {});
-  ```
-- `mounted` 服务启动后处理的生命周期
-  ```ts
-  server.lifecycle.on('mounted', () => {});
-  ```
-- `unmounted` 服务结束时处理的生命周期
-  ```ts
-  server.lifecycle.on('unmounted', () => {});
-  ```
-
-> `Events` 主要用于对功能的扩展,可以接入很多自定义功能.
 
 ## Swagger
 
@@ -337,22 +381,22 @@ class Test {
   }
 }
 
-const app = new Application();
-const server = new Server(app);
-
+const server = new Server();
+const app = server.application;
+const provider = server.provider;
+const consumer = server.consumer;
+const registry = new ZooKeeper(app, { host: '127.0.0.1' });
 app.application = '测试';
 app.port = 6000;
-
-new ZooKeeper(app, {
-  host: '127.0.0.1'
-})
+app.heartbeat = 3000;
+app.useRegistry(registry);
 
 useSwagger(server); // 注意: useSwagger必须写在server.addService之前
 
 server.addService(Test);
 
-server.listen().then(tcp => {
-  console.log(' - Tcp server on', 'port:', app.port, 'status:', tcp.listening);
+server.listen().then(() => {
+  console.log(' - Tcp server on', 'port:', app.port);
 });
 ```
 

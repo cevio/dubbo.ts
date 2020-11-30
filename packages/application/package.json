@@ -19,6 +19,7 @@
     "access": "public"
   },
   "dependencies": {
+    "@dubbo.ts/protocol": "^1.0.10",
     "@dubbo.ts/utils": "^1.0.6"
   }
 }

@@ -1,4 +1,6 @@
-type TEvent = Record<string, any[]>;
+type TEvent = {
+  [key: string]: any[],
+};
 
 export class Events<E extends TEvent> extends Map<keyof E, Set<((...args: E[keyof E]) => Promise<void>)>> {
 
@@ -9,6 +11,15 @@ export class Events<E extends TEvent> extends Map<keyof E, Set<((...args: E[keyo
     return this;
   }
 
+  emit<T extends keyof E>(type:T, ...args: E[T]) {
+    if (this.has(type)) {
+      const chunk = this.get(type);
+      for (const item of chunk) item(...args);
+    } else if (type === 'error') {
+      throw args[0];
+    }
+  }
+
   public async emitSync<T extends keyof E>(type:T, ...args: E[T]) {
     if (this.has(type)) {
       const chunk = this.get(type);
@@ -16,9 +27,8 @@ export class Events<E extends TEvent> extends Map<keyof E, Set<((...args: E[keyo
         await item(...args);
       }
     } else if (type === 'error') {
-      throw new Error(args[0]);
+      throw args[0];
     }
-    return this;
   }
 
   public async emitAsync<T extends keyof E>(type:T, ...args: E[T]) {
@@ -26,9 +36,8 @@ export class Events<E extends TEvent> extends Map<keyof E, Set<((...args: E[keyo
       const chunk = this.get(type);
       await Promise.all(Array.from(chunk.values()).map(item => item(...args)));
     } else if (type === 'error') {
-      throw new Error(args[0]);
+      throw args[0];
     }
-    return this;
   }
 
   public off<T extends keyof E>(type: T, handler?: (...args: E[T]) => Promise<void>) {

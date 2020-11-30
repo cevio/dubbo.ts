@@ -1,7 +1,7 @@
 import { JSONSchema } from 'json-schema-typed';
 import { TAnnotationScanerMethod, TClassIndefiner, TTransformMethod } from '@dubbo.ts/server';
 import { outputSchemaNameSpace } from './annotations';
-export function TransformClassMethod(options: {
+export async function TransformClassMethod(options: {
   classModule: TClassIndefiner<any>,
   classMethodName: string,
   annotationClassMethodMetadata: TAnnotationScanerMethod,
