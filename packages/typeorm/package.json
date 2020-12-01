@@ -1,0 +1,25 @@
+{
+  "name": "@dubbo.ts/typeorm",
+  "version": "1.0.0",
+  "description": "dubbo typeorm module",
+  "author": "",
+  "homepage": "https://github.com/cevio/dubbo.ts",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "directories": {
+    "lib": "src"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rm -rf ./dist && tsc"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@dubbo.ts/server": "^2.0.0",
+    "typeorm": "^0.2.29"
+  }
+}
