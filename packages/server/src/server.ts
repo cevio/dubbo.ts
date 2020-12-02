@@ -65,8 +65,8 @@ export class Server extends Events<TServerEvents> {
 
   private async execute(schema: TDecodeRequestSchema, status: typeof RESPONSE_STATUS): Promise<{ status: RESPONSE_STATUS, data: any }> {
     const classInterface = schema.interface;
-    const classGroup = schema.attachments[Attachment.GROUP_KEY] || '*';
-    const classVersion = schema.version || schema.attachments[Attachment.VERSION_KEY] || '0.0.0';
+    const classGroup = schema.attachments[Attachment.GROUP_KEY] || schema.attachments.group || '*';
+    const classVersion = schema.version || schema.attachments[Attachment.VERSION_KEY] || schema.attachments.version || '0.0.0';
     const method = schema.method;
     const parameters = schema.parameters;
     if (!this.modules.has(classInterface)) return this.responseNotFound(status, `Cannot find the interface: ${classInterface}`);
