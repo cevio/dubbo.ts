@@ -1,6 +1,6 @@
 {
   "name": "@dubbo.ts/swagger",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "dubbo swagger module",
   "author": "",
   "homepage": "https://github.com/cevio/dubbo.ts",
@@ -19,7 +19,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@dubbo.ts/server": "^2.0.1",
+    "@dubbo.ts/server": "^2.0.2",
     "json-schema-typed": "^7.0.3"
   },
   "devDependencies": {
