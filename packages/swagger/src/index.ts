@@ -96,6 +96,6 @@ export function queryRegistry(regsitry: TRegistry, group: string = '*', name?: s
 }
 
 export function parse(str: string): TSwaggerObject {
-  const _str = Buffer.from(str, 'base64').toString();
-  return JSON.parse(decodeURIComponent(_str))
+  const _str = Buffer.from(decodeURIComponent(str), 'base64').toString();
+  return JSON.parse(decodeURIComponent(_str));
 }
