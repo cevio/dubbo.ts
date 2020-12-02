@@ -69,7 +69,7 @@ export function useSwagger(server: Server) {
         object.methods[key] = obj;
       }
 
-      path += '/' + Buffer.from(JSON.stringify(object)).toString('base64');
+      path += '/' + encodeURIComponent(Buffer.from(JSON.stringify(object)).toString('base64'));
       await registry.create(path);
       paths.push(path);
     }
@@ -96,5 +96,6 @@ export function queryRegistry(regsitry: TRegistry, group: string = '*', name?: s
 }
 
 export function parse(str: string): TSwaggerObject {
-  return JSON.parse(Buffer.from(str, 'base64').toString());
+  const _str = Buffer.from(str, 'base64').toString();
+  return JSON.parse(decodeURIComponent(_str))
 }
