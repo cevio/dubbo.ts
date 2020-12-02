@@ -32,6 +32,8 @@ type TServerEvents = {
   }]
 }
 
+export type TFetcher = <T = any>(name: string, method: string, args: any[], configs: { group?: string, version?: string }) => Promise<T>;
+
 export class Server extends Events<TServerEvents> {
   static readonly fetch = Symbol('server.fetch');
   public readonly application: Application;
@@ -49,7 +51,7 @@ export class Server extends Events<TServerEvents> {
     this.provider.on('data', async reply => reply((schema, status) => this.execute(schema, status)));
     this.application.useProvider(this.provider);
     this.application.useConsumer(this.consumer);
-    this.container.bind(Server.fetch)
+    this.container.bind<TFetcher>(Server.fetch)
       .toFunction(<T = any>(name: string, method: string, args: any[], configs: { group?: string, version?: string }) => {
         return this.invoke<T>(name, method, args, configs);
       });

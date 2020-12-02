@@ -1,8 +1,9 @@
 import { ZooKeeper } from '@dubbo.ts/zookeeper';
-import { Server, Service, Proxy } from '../src';
+import { Server, Service, Proxy, inject, TFetcher } from '../src';
 
 @Service('Com.Node.Dubbo.Test')
 class Test {
+  @inject(Server.fetch) private fetch: TFetcher;
   @Proxy()
   public sum(a: number, b: number) {
     return a + b;
