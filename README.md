@@ -231,7 +231,7 @@ consumer.on('start', async () => console.log(' + [consumer]', 'started'))
 consumer.on('stop', async () => console.log(' - [consumer]', 'stoped'))
 consumer.on('disconnect', async () => console.log(' - [consumer]', 'server disconnect'));
 consumer.on('connect', async () => console.log(' + [consumer]', 'server connected'));
-consumer.on('reconnect', async () => console.log(' # [consumer]', 'server reconnected'));
+consumer.on('reconnect', async (index, conn) => console.log(' # [consumer]', index + 'times connecting...', conn.id));
 consumer.on('error', async e => console.error(' ! [consumer]', e));
 consumer.on('channels', async result => console.log(' $ [consumer]', result.map((res: any) => res.host)));
 consumer.on('heartbeat', async () => console.log(' @ [heartbeat]', '[consumer]', 'send'))
@@ -266,10 +266,10 @@ const result = await client.execute(interface, method, args, configs);
   import { Channel } from '@dubbo.ts/consumer';
   consumer.on('disconnect', (channel: Channel) => {});
   ```
-- `reconnect` 与服务端发生重连的事件
+- `reconnect` 与服务端发生重连的事件 index:第n次连接
   ```ts
   import { Channel } from '@dubbo.ts/consumer';
-  consumer.on('reconnect', (channel: Channel) => {});
+  consumer.on('reconnect', (index: number, channel: Channel) => {});
   ```
 - `error` 服务出错触发该事件，接受一个错误对象。
   ```ts

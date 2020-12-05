@@ -22,6 +22,7 @@ export class Provider extends Events<TProviderEvents> implements TProvider<TProv
     // 将启动与关闭流程注册到Application统一管理
     this.application.on('unmounted', () => this.close());
     this.application.on('mounted', () => this.listen());
+    this.on('error', async err => console.error(err));
 
     this.tcp.on('error', err => this.emit('error', err));
     this.tcp.on('close', () => {

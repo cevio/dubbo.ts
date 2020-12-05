@@ -11,7 +11,7 @@ export type TConsumerEvents = TConsumerBaseEvents & {
   channels: [UrlWithParsedQuery[]],
   connect: [Channel],
   disconnect: [Channel],
-  reconnect: [Channel],
+  reconnect: [number, Channel],
   error: [Error],
   heartbeat: [],
   ['heartbeat:timeout']: [],
@@ -26,6 +26,7 @@ export class Consumer extends Events<TConsumerEvents> implements TConsumer<TCons
     // 将启动与关闭流程注册到Application统一管理
     this.application.on('mounted', () => this.launch());
     this.application.on('unmounted', () => this.close());
+    this.on('error', async err => console.error(err));
   }
 
   // 直连模式

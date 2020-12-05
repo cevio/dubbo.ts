@@ -1,5 +1,5 @@
 import { Socket } from 'net';
-import { Provider, TProviderEvents } from "./provider";
+import { Provider } from "./provider";
 import { Pool, TDecodeRequestSchema, RESPONSE_STATUS, Response, Attachment } from '@dubbo.ts/protocol';
 
 export type TProviderReply = ReturnType<Connection['createExecution']>;
@@ -15,7 +15,7 @@ export class Connection {
     this.pool.on('request', (schema: TDecodeRequestSchema) => this.provider.emit('data', this.createExecution(schema)));
     this.pool.on('heartbeat:timeout', () => this.provider.emitAsync('heartbeat:timeout').then(() => this.socket.end()));
     this.pool.on('heartbeat', () => this.provider.emit('heartbeat'));
-    this.pool.startHeartBeat();
+    this.pool.open();
   }
 
   public createExecution(schema: TDecodeRequestSchema) {

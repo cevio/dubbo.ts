@@ -105,4 +105,11 @@ export class Callbacks extends Map<number, [(data: any) => void, (e: Error) => v
       case 3: throw this.error;
     }
   }
+
+  public reset() {
+    this.id = 0;
+    this.connectCode = 0;
+    this.error = null;
+    this.waits.clear();
+  }
 }

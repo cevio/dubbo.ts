@@ -15,7 +15,7 @@ consumer.launch();
 
 consumer.on('disconnect', async (conn) => console.log('server disconnect', conn.id));
 consumer.on('connect', async (conn) => console.log('server connected', conn.id));
-consumer.on('reconnect', async (conn) => console.log('server connected', conn.id));
+consumer.on('reconnect', async (index) => console.log('正在第%d次重新连接...',index));
 consumer.on('error', async e => console.error(e));
 consumer.on('channels', async url => console.log('channels:', url.map(u => u.host)));
 

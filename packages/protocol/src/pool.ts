@@ -2,6 +2,7 @@ import { EventEmitter } from 'events';
 import { decodeBuffer } from './decode';
 import { Request } from './request';
 export class Pool extends EventEmitter {
+  private POOL_CLOSING = false;
   private readonly READ_STATIC_POOL: Buffer[] = [];
   private READ_DYNAMIC_BUFFER: Buffer = Buffer.alloc(0);
   private READ_STATUS = false;
@@ -52,6 +53,7 @@ export class Pool extends EventEmitter {
   }
 
   public putWriteBuffer(buf: Buffer) {
+    if (this.POOL_CLOSING) return;
     this.WRITE_STATIC_POOL.push(buf);
     this._LASTWRITE_TIMESTAMP = Date.now();
     if (this.WRITE_STATUS) return;
@@ -70,11 +72,13 @@ export class Pool extends EventEmitter {
     }
   }
 
-  public startHeartBeat() {
+  private startHeartBeat() {
     if (this.HEARTBEAT_TIME === 0) return;
     this.HEARTBEAT_TIMER = setInterval(() => {
       const now = Date.now();
-      if ((now - this._LASTREAD_TIMESTAMP > this.HEARTBEAT_TIME) || (now - this._LASTWRITE_TIMESTAMP > this.HEARTBEAT_TIME)) {
+      if (now - this._LASTREAD_TIMESTAMP > this.HEARTBEAT_TIME * 3) {
+        this.emit('heartbeat:timeout');
+      } else if ((now - this._LASTREAD_TIMESTAMP > this.HEARTBEAT_TIME) || (now - this._LASTWRITE_TIMESTAMP > this.HEARTBEAT_TIME)) {
         const req = new Request();
         req.setTwoWay(true);
         req.setEvent(Request.HEARTBEAT_EVENT);
@@ -82,13 +86,18 @@ export class Pool extends EventEmitter {
         this.putWriteBuffer(req.value());
         this.emit('heartbeat');
       }
-      if (now - this._LASTREAD_TIMESTAMP > this.HEARTBEAT_TIME * 3) {
-        this.emit('heartbeat:timeout');
-      }
     }, this.HEARTBEAT_TIME);
   }
 
+  public open() {
+    this.POOL_CLOSING = false;
+    this._LASTREAD_TIMESTAMP = Date.now();
+    this._LASTWRITE_TIMESTAMP = Date.now();
+    this.startHeartBeat();
+  }
+
   public close() {
+    this.POOL_CLOSING = true;
     this._LASTREAD_TIMESTAMP = 0;
     this._LASTWRITE_TIMESTAMP = 0;
     clearInterval(this.HEARTBEAT_TIMER);

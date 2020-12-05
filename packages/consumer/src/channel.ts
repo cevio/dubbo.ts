@@ -1,10 +1,9 @@
 import { getFinger } from "./finger";
 import { Socket, createConnection } from 'net';
 import { EventEmitter } from 'events';
-import { Pool, TDecodeResponseSchema } from '@dubbo.ts/protocol';
+import { Pool, TDecodeResponseSchema, Request, Attachment } from '@dubbo.ts/protocol';
 import { Consumer } from "./consumer";
 import { Callbacks } from './callbacks';
-import { Request, Attachment } from '@dubbo.ts/protocol';
 import { TConsumerChannel } from '@dubbo.ts/application';
 
 const Retry = require('promise-retry');
@@ -32,15 +31,19 @@ export class Channel extends EventEmitter implements TConsumerChannel {
   private async reconnect() {
     this.RECONNECTING = true;
     await this.close();
-    await this.retryConnect();
+    await this.retryConnect(true);
     this.RECONNECTING = false;
-    await this.consumer.emitAsync('reconnect', this);
   }
 
-  private async retryConnect() {
-    await this.callbacks.wait(() => Retry((retry: any) => this.connect().catch(retry), {
-      retries: this.consumer.application.retries,
-      minTimeout: this.consumer.application.timeout,
+  private retryConnect(isReconnect?: boolean) {
+    isReconnect && this.callbacks.reset();
+    return this.callbacks.wait(() => Retry((retry: any, number: number) => {
+      isReconnect && this.consumer.emit('reconnect', number, this);
+      return this.connect().catch(retry);
+    }, {
+      retries: 20,
+      minTimeout: 3000,
+      maxTimeout: 10000,
     }));
   }
 
@@ -51,19 +54,22 @@ export class Channel extends EventEmitter implements TConsumerChannel {
         tcp.removeListener('error', errorListener);
         reject(err);
       };
+      tcp.setNoDelay();
       tcp.on('error', errorListener);
       tcp.once('ready', () => {
         tcp.removeListener('error', errorListener);
         tcp.on('data', (buf: Buffer) => this.pool.putReadBuffer(buf));
         tcp.on('error', e => this.consumer.emit('error', e));
-        tcp.on('end', () => {
+        tcp.on('close', () => {
           if (!this.RECONNECTING) {
-            this.close(true)
+            this.retryConnect(true).catch(e => {
+              this.close(true)
               .then(() => this.consumer.deleteChannel(this))
               .catch(e => this.consumer.emitAsync('error', e));
+            });
           }
         });
-        this.pool.startHeartBeat();
+        this.pool.open();
         resolve();
       });
     });
