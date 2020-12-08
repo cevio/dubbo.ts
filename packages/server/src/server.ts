@@ -43,6 +43,7 @@ export class Server extends Events<TServerEvents> {
   public readonly container = new Container();
   // interface - group - version: ClassModule
   private readonly modules: Map<string, Map<string, Map<string, TClassIndefiner<any>>>> = new Map();
+  private defaultGroup: string = '*';
   constructor() {
     super();
     this.application = new Application();
@@ -55,6 +56,11 @@ export class Server extends Events<TServerEvents> {
       .toFunction(<T = any>(name: string, method: string, args: any[], configs: { group?: string, version?: string }) => {
         return this.invoke<T>(name, method, args, configs);
       });
+  }
+
+  public setDefaultGroup(group: string) {
+    this.defaultGroup = group;
+    return this;
   }
 
   private async invoke<T = any>(name: string, method: string, args: any[], configs: { group?: string, version?: string } = {}) {
@@ -104,7 +110,7 @@ export class Server extends Events<TServerEvents> {
     const classInterface = classMetadata.meta.got<string>(NAMESPACE.INTERFACE, null);
     if (!classInterface) return;
     const classInjectors = classMetadata.meta.got<TClassIndefiner<any>[]>(NAMESPACE.INJECTABLE, []);
-    const classGroup = classMetadata.meta.got<string>(NAMESPACE.GROUP, '*');
+    const classGroup = classMetadata.meta.got<string>(NAMESPACE.GROUP, this.defaultGroup);
     const classVersion = classMetadata.meta.got<string>(NAMESPACE.VERSION, '0.0.0');
     const classMethods: string[] = [];
     const meta = new TransformMetaData(classInterface, classGroup, classVersion, this.application.port);

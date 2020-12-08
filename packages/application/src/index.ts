@@ -28,8 +28,9 @@ export class Application extends Events<{
 
   constructor() {
     super();
+    this.on('error', async (e: Error) => console.error(e));
     this.listener = createProcessListener(
-      () => this.stop(),
+      () => this.stop().catch(e => this.emitAsync(e).finally(() => process.exit(0))),
       e => this.emitAsync('error', e)
     );
   }
