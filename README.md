@@ -22,7 +22,7 @@
 
 ## Performance
 
-![dubbo performance](https://cdn.aidigger.com/Bumblebee/2020-11-22/c50ca1eb29a1fad7e19da5b05564dcdd.png)
+![dubbo performance](https://cdn.aidigger.com/Bumblebee/2020-12-19/ececbd1ca1392e9bc5beceb8ab01247d.png)
 
 ## Application
 
