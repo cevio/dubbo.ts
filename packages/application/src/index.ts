@@ -2,10 +2,12 @@ import { createProcessListener, Events } from '@dubbo.ts/utils';
 import { TProvider, TProviderBaseEvents } from "./provider";
 import { TConsumer, TConsumerBaseEvents } from "./consumer";
 import { TRegistry, TRegistryBaseEvents } from './registry';
+import { TLogger } from './logger';
 
 export * from './registry';
 export * from './provider';
 export * from './consumer';
+export * from './logger';
 
 export class Application extends Events<{ 
   mounted: [], 
@@ -25,6 +27,7 @@ export class Application extends Events<{
   public registry: TRegistry<any>;
   public provider: TProvider<any>;
   public consumer: TConsumer<any>;
+  public logger: TLogger = console;
 
   constructor() {
     super();
@@ -168,6 +171,11 @@ export class Application extends Events<{
       this.consumer = null;
       await this.emitAsync('consumer:stop', consumer);
     })
+    return this;
+  }
+
+  public useLogger<T extends TLogger = Console>(logger: T) {
+    this.logger = logger;
     return this;
   }
 }

@@ -10,7 +10,16 @@ export class Connection {
     public readonly provider: Provider, 
     private readonly socket: Socket
   ) {
-    this.pool = new Pool(this.provider.application.heartbeat, buf => this.socket.write(buf));
+    this.pool = new Pool(this.provider.application.heartbeat, buf => {
+      /**
+       * 防止产生write after end的错误
+       * 一般的，如果连接丢失，池里面可能还存在队列
+       * 这个时候应该不能发送数据
+       */
+      if (this.socket.writable) {
+        this.socket.write(buf);
+      }
+    });
     this.socket.on('data', buf => this.pool.putReadBuffer(buf));
     this.pool.on('request', (schema: TDecodeRequestSchema) => this.provider.emit('data', this.createExecution(schema)));
     this.pool.on('heartbeat:timeout', () => this.provider.emitAsync('heartbeat:timeout').then(() => this.socket.end()));

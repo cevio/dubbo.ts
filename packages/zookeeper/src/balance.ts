@@ -29,7 +29,9 @@ export class Balance<T extends TConsumerChannel = TConsumerChannel> extends Even
   }
 
   public getOne(): T {
-    return Array.from(this.channels.values()).reduce((prev, next) => {
+    const channels = Array.from(this.channels.values());
+    if (!channels.length) return;
+    return channels.reduce((prev, next) => {
       if (prev.count > next.count) return next;
       return prev;
     });

@@ -17,12 +17,16 @@ export class Provider extends Events<TProviderEvents> implements TProvider<TProv
   private readonly tcp = createServer();
   private activeShutdown = false;
 
+  get logger() {
+    return this.application.logger;
+  }
+
   constructor(public readonly application: Application) {
     super();
     // 将启动与关闭流程注册到Application统一管理
     this.application.on('unmounted', () => this.close());
     this.application.on('mounted', () => this.listen());
-    this.on('error', async err => console.error(err));
+    this.on('error', async err => this.logger.error(err));
 
     this.tcp.on('error', err => this.emit('error', err));
     this.tcp.on('close', () => {

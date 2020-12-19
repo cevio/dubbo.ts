@@ -1,18 +1,7 @@
 import { TDecodeResponseSchema } from '@dubbo.ts/protocol';
-import { Channel } from './channel';
 
 export class Callbacks extends Map<number, [(data: any) => void, (e: Error) => void]> {
   private id = 0;
-  private connectCode: 0 | 1 | 2 | 3 = 0;
-  private error: Error;
-  private readonly waits: Set<{
-    resolve: () => void,
-    reject: (e: Error) => void,
-  }> = new Set();
-
-  constructor(private readonly channel: Channel) {
-    super();
-  }
 
   public createRequestTask<T = any>(
     id: number, 
@@ -54,62 +43,5 @@ export class Callbacks extends Map<number, [(data: any) => void, (e: Error) => v
       if (data.error) return reject(data.error);
       resolve(data.data);
     }
-  }
-
-  private deleteOperation(operation: {
-    resolve: () => void,
-    reject: (e: Error) => void,
-  }) {
-    if (this.waits.has(operation)) {
-      this.waits.delete(operation);
-    }
-  }
-
-  public async wait(callback: () => Promise<void>) {
-    switch (this.connectCode) {
-      case 0:
-        this.connectCode = 1;
-        await callback().then(() => {
-          this.connectCode = 2;
-          for (const { resolve } of this.waits) resolve();
-        }).catch(e => {
-          this.connectCode = 3;
-          this.error = e;
-          for (const { reject } of this.waits) reject(e);
-          return Promise.reject(e);
-        });
-        break;
-      case 1:
-        await new Promise<void>((resolve, reject) => {
-          const resolver = () => {
-            clearTimeout(timer);
-            this.deleteOperation(operation);
-            resolve();
-          }
-          const rejecter = (e: Error) => {
-            clearTimeout(timer);
-            this.deleteOperation(operation);
-            reject(e);
-          }
-          const operation = {
-            resolve: resolver,
-            reject: rejecter,
-          }
-          const timer = setTimeout(() => {
-            this.deleteOperation(operation);
-            reject(new Error('[rpc] client connect timeout:' + this.channel.consumer.application.timeout + 'ms'));
-          }, this.channel.consumer.application.timeout);
-          this.waits.add(operation);
-        });
-        break;
-      case 3: throw this.error;
-    }
-  }
-
-  public reset() {
-    this.id = 0;
-    this.connectCode = 0;
-    this.error = null;
-    this.waits.clear();
   }
 }

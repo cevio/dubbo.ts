@@ -1,20 +1,27 @@
+import * as inject from 'reconnect-core';
 import { getFinger } from "./finger";
-import { Socket, createConnection } from 'net';
+import { Socket, createConnection, NetConnectOpts } from 'net';
 import { EventEmitter } from 'events';
 import { Pool, TDecodeResponseSchema, Request, Attachment } from '@dubbo.ts/protocol';
 import { Consumer } from "./consumer";
 import { Callbacks } from './callbacks';
 import { TConsumerChannel } from '@dubbo.ts/application';
+import { WaitUntil } from 'wait-until-queue';
 
-const Retry = require('promise-retry');
-
+const reconnect = inject((options: NetConnectOpts) => createConnection(options));
 export class Channel extends EventEmitter implements TConsumerChannel {
+  public count = 0;
   private tcp: Socket;
+  private rec: inject.Instance<unknown, unknown>;
   public readonly id: string;
   private readonly pool: Pool;
-  private callbacks: Callbacks = new Callbacks(this);
-  private RECONNECTING = false;
-  public count = 0;
+  private readonly waitUntil = new WaitUntil();
+  private readonly callbacks: Callbacks = new Callbacks();
+
+  get logger() {
+    return this.consumer.logger;
+  }
+  
   constructor(
     public readonly host: string, 
     public readonly port: number, 
@@ -22,65 +29,59 @@ export class Channel extends EventEmitter implements TConsumerChannel {
   ) {
     super();
     this.id = getFinger(host, port);
-    this.pool = new Pool(this.consumer.application.heartbeat, buf => this.tcp.write(buf));
+    this.pool = new Pool(this.consumer.application.heartbeat, buf => {
+      if (this.tcp.writable) {
+        this.tcp.write(buf);
+      }
+    });
     this.pool.on('response', (data: TDecodeResponseSchema) => this.callbacks.resolveResponse(data));
-    this.pool.on('heartbeat:timeout', () => this.consumer.emitAsync('heartbeat:timeout').then(() => this.reconnect()));
+    this.pool.on('heartbeat:timeout', () => {
+      if (this.tcp) this.tcp.end();
+      this.consumer.emitAsync('heartbeat:timeout');
+    });
     this.pool.on('heartbeat', () => this.consumer.emit('heartbeat'));
   }
 
-  private async reconnect() {
-    this.RECONNECTING = true;
-    await this.close();
-    await this.retryConnect(true);
-    this.RECONNECTING = false;
-  }
-
-  private retryConnect(isReconnect?: boolean) {
-    isReconnect && this.callbacks.reset();
-    return this.callbacks.wait(() => Retry((retry: any, number: number) => {
-      isReconnect && this.consumer.emit('reconnect', number, this);
-      return this.connect().catch(retry);
-    }, {
-      retries: 20,
-      minTimeout: 3000,
-      maxTimeout: 10000,
-    }));
-  }
-
-  private async connect() {
-    await new Promise<void>((resolve, reject) => {
-      const tcp = this.tcp = createConnection({ host: this.host, port: this.port });
-      const errorListener = (err: Error) => {
-        tcp.removeListener('error', errorListener);
-        reject(err);
-      };
-      tcp.setNoDelay();
-      tcp.on('error', errorListener);
-      tcp.once('ready', () => {
-        tcp.removeListener('error', errorListener);
-        tcp.on('data', (buf: Buffer) => this.pool.putReadBuffer(buf));
-        tcp.on('error', e => this.consumer.emit('error', e));
-        tcp.on('close', () => {
-          if (!this.RECONNECTING) {
-            this.retryConnect(true).catch(e => {
-              this.close(true)
-              .then(() => this.consumer.deleteChannel(this))
-              .catch(e => this.consumer.emitAsync('error', e));
-            });
-          }
-        });
-        this.pool.open();
+  private connect() {
+    return new Promise<void>((resolve, reject) => {
+      const rec = reconnect({
+        initialDelay: 1e3,
+        maxDelay: 30e3,
+        strategy: 'fibonacci',
+        failAfter: 20,
+        randomisationFactor: 0,
+        immediate: false,
+      }).connect({
+        host: this.host,
+        port: this.port,
+      })
+      .on('connect', (conn: Socket) => {
+        this.rec = rec;
+        this.tcp = conn;
+        conn.on('data', (buf: Buffer) => this.pool.putReadBuffer(buf));
+        this.waitUntil.resolve(conn);
+        this.consumer.emit('connect', this);
         resolve();
+      })
+      .on('error', err => this.logger.error(err))
+      .on('reconnect', (n, delay) => {
+        this.waitUntil.pause();
+        this.consumer.emit('reconnect', n, delay)
+      })
+      .on('disconnect', err => {
+        this.tcp.removeAllListeners('data');
+        this.consumer.emit('disconnect', this);
+      })
+      .on('fail', (e) => {
+        this.waitUntil.reject(e);
+        return this.close().finally(() => reject(e));
       });
     });
-    await this.consumer.emitAsync('connect', this);
   }
 
-  public async close(passive?: boolean) {
+  public async close() {
     this.pool.close();
-    try{
-      !passive && await new Promise<void>((resolve) => this.tcp.end(resolve));
-    } catch(e) {}
+    this.rec && this.rec.disconnect();
     this.emit('disconnect');
     await this.consumer.emitAsync('disconnect', this);
   }
@@ -90,7 +91,7 @@ export class Channel extends EventEmitter implements TConsumerChannel {
     group?: string,
   } = {}) {
     this.count = this.count + 1;
-    await this.retryConnect();
+    await this.waitUntil.wait(() => this.connect());
 
     const version = options.version || '0.0.0';
     const group = options.group || '*';
