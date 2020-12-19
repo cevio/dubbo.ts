@@ -1,6 +1,6 @@
 {
   "name": "@dubbo.ts/server",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "dubbo server module",
   "author": "",
   "homepage": "https://github.com/cevio/dubbo.ts",
@@ -19,15 +19,15 @@
     "access": "public"
   },
   "dependencies": {
-    "@dubbo.ts/application": "^2.0.2",
-    "@dubbo.ts/consumer": "^2.0.2",
+    "@dubbo.ts/application": "^2.0.3",
+    "@dubbo.ts/consumer": "^2.0.3",
     "@dubbo.ts/protocol": "^2.0.1",
-    "@dubbo.ts/provider": "^2.0.2",
+    "@dubbo.ts/provider": "^2.0.3",
     "@dubbo.ts/utils": "^2.0.0",
     "inversify": "^5.0.1",
     "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
-    "@dubbo.ts/zookeeper": "^2.0.2"
+    "@dubbo.ts/zookeeper": "^2.0.3"
   }
 }
