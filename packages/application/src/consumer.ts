@@ -16,4 +16,5 @@ export interface TConsumerChannel extends EventEmitter {
     version?: string,
     group?: string,
   }): Promise<T>;
+  close(): Promise<void>;
 }

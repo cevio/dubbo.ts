@@ -25,6 +25,7 @@ type TConsumerInvoker = {
   balance: Balance,
   resolveAndReject: [(channel: TConsumerChannel) => void, (e: Error) => void][],
   path: string,
+  stopHandler?: () => Promise<void>
 }
 
 export class ZooKeeper extends Events<TRegistryEvents> implements TRegistry<TRegistryEvents> {
@@ -70,32 +71,41 @@ export class ZooKeeper extends Events<TRegistryEvents> implements TRegistry<TReg
         case 1: resolve(invoker.balance.getOne()); break;
         default:
           invoker.resolveAndReject.push([resolve, reject]);
-          if (!invoker.pending) {
-            invoker.pending = true;
-            const consumer = this.application.consumer as TConsumer<TConsumerBaseEvents>;
-            this.getConsumer(name, options).then(uris => {
-              invoker.balance.setManyChannels(uris, (host, port) => this.application.consumer.connect(host, port));
-              invoker.status = 1;
-              return this.create(invoker.path);
-            }).then(() => {
-              invoker.balance.on('disconnect', () => {
-                this.remove(invoker.path);
-                this.consumerInvokers.delete(id);
-              });
-              consumer.on('stop', () => this.remove(invoker.path));
-              const pools = invoker.resolveAndReject.slice(0);
-              invoker.resolveAndReject.length = 0;
-              this.runAllResolves(pools, invoker.balance.getOne());
-            }).catch(e => {
-              invoker.status = -1;
-              invoker.error = e;
-              const pools = invoker.resolveAndReject.slice(0);
-              invoker.resolveAndReject.length = 0;
-              this.runAllRejects(pools, e);
-            }).finally(() => invoker.pending = false)
-          }
+          if (!invoker.pending) this.getConsumersByInvoker(id, invoker, name, options);
       }
     })
+  }
+
+  private getConsumersByInvoker(id: string, invoker: TConsumerInvoker, name: string, options: { group?: string, version?: string } = {}) {
+    invoker.pending = true;
+    const consumer = this.application.consumer as TConsumer<TConsumerBaseEvents>;
+    const path = `/${this.application.root}/${name}/providers`;
+    if (invoker.stopHandler) consumer.off('stop', invoker.stopHandler);
+    invoker.stopHandler = () => this.remove(invoker.path);
+    invoker.balance.removeAllListeners('disconnect');
+    this.query(path, (event) => this.notify(event, () => this.getConsumersByInvoker(id, invoker, name, options)))
+    .then(urls => this.filterConsumers(urls, name, options))
+    .then(uris => invoker.balance.setManyChannels(uris, (host, port) => consumer.connect(host, port)))
+    .then(() => {
+      invoker.status = 1;
+      return this.create(invoker.path);
+    }).then(() => {
+      invoker.balance.on('disconnect', () => {
+        invoker.stopHandler();
+        consumer.off('stop', invoker.stopHandler);
+        this.consumerInvokers.delete(id);
+      });
+      consumer.on('stop', invoker.stopHandler);
+      const pools = invoker.resolveAndReject.slice(0);
+      invoker.resolveAndReject.length = 0;
+      this.runAllResolves(pools, invoker.balance.getOne());
+    }).catch(e => {
+      invoker.status = -1;
+      invoker.error = e;
+      const pools = invoker.resolveAndReject.slice(0);
+      invoker.resolveAndReject.length = 0;
+      this.runAllRejects(pools, e);
+    }).finally(() => invoker.pending = false);
   }
 
   private runAllRejects(pools: TConsumerInvoker['resolveAndReject'], e: Error) {
@@ -106,11 +116,18 @@ export class ZooKeeper extends Events<TRegistryEvents> implements TRegistry<TReg
     for (let i = 0; i < pools.length; i++) pools[i][0](data);
   }
 
-  private async getConsumer(name: string, options: { group?: string, version?: string } = {}) {
+  private notify(event: Event, callback: () => void) {
+    switch (event.getName()) {
+      case 'NODE_CREATED':
+      case 'NODE_DELETED':
+      case 'NODE_DATA_CHANGED': this.application.logger.info('[DUBBO ZOOKEEPER NOTIFY]', event.getName(), event); break;
+      case 'NODE_CHILDREN_CHANGED': callback(); break;
+    }
+  }
+
+  private filterConsumers(urls: string[], name: string, options: { group?: string, version?: string } = {}) {
     const group = options.group || '*';
     const version = options.version || '0.0.0';
-    const path = `/${this.application.root}/${name}/providers`;
-    const urls = (await this.query(path)) || [];
     let uris = urls.map(url => parse(decodeURIComponent(url), true));
     if (this.consumerFilters.size) {
       for (const filter of this.consumerFilters) {
@@ -153,11 +170,6 @@ export class ZooKeeper extends Events<TRegistryEvents> implements TRegistry<TReg
       node: interface_entry_path,
     };
   }
-
-  // public setChannelMatcher(callback: TChannelMatchHandler) {
-  //   this.channelMatchRule = callback;
-  //   return this;
-  // }
 
   /**
    * 当前Provider服务器信息
@@ -222,72 +234,6 @@ export class ZooKeeper extends Events<TRegistryEvents> implements TRegistry<TReg
       await this.remove(node);
     }
   }
-
-  // public async onProviderPublish() {
-  //   await this.connect();
-  //   await Promise.all(Array.from(this.values()).map(url => this.create(url)));
-  // }
-
-  // public async onConsumerRegister(name: string, options: { group?: string, version?: string } = {}) {
-  //   const obj = {
-  //     protocol: "consumer",
-  //     slashes: true,
-  //     host: `${localhost}/${name}`,
-  //     query: {
-  //       [Attachment.APPLICATION_KEY]: this.application.application,
-  //       category: "consumers",
-  //       [Attachment.DUBBO_VERSION_KEY]: this.application.version,
-  //       [Attachment.INTERFACE_KEY]: name,
-  //       [Attachment.PID_KEY]: this.application.pid,
-  //       side: 'consumer',
-  //       [Attachment.TIMESTAMP_KEY]: Date.now(),
-  //       [Attachment.VERSION_KEY]: options.version || '0.0.0',
-  //       [Attachment.GROUP_KEY]: options.group || '*',
-  //     }
-  //   }
-  //   const dubboInterfaceURL = format(obj);
-  //   const interface_root_path = `/${this.application.root}/${name}`;
-  //   const interface_dir_path = interface_root_path + '/consumers';
-  //   const interface_entry_path = interface_dir_path + '/' + encodeURIComponent(dubboInterfaceURL);
-  //   await this.create(interface_entry_path);
-  //   return interface_entry_path;
-  // }
-
-  // public onConsumerUnRegister(url: string) {
-  //   return this.remove(url);
-  // }
-
-  // public async onConsumerQuery(name: string, options: { group?: string, version?: string } = {}) {
-  //   const group = options.group || '*';
-  //   const version = options.version || '0.0.0';
-  //   const path = `/${this.application.root}/${name}/providers`;
-  //   const urls = (await this.query(path)) || [];
-  //   return urls.map(url => {
-  //     const URI = parse(decodeURIComponent(url), true);
-  //     if (this.channelMatchRule && this.channelMatchRule(URI, {
-  //       interface: name,
-  //       group, version,
-  //     })) return URI;
-  //     const interfaceMatched = URI.query[Attachment.INTERFACE_KEY] === name || URI.query[Attachment.PATH_KEY] === name;
-  //     const groupMatched = group === '*' ? true : (URI.query[Attachment.GROUP_KEY] === group);
-  //     const versionMatched = version === '0.0.0' ? true : URI.query[Attachment.VERSION_KEY] === version;
-  //     if (interfaceMatched && groupMatched && versionMatched) return URI;
-  //     return null;
-  //   }).filter(Boolean);
-  // }
-
-  // public onConsumerConnect() {
-  //   return this.connect();
-  // }
-
-  // public onConsumerDisconnect() {
-  //   return this.close();
-  // }
-
-  // public async onProviderUnPublish() {
-  //   await Promise.all(Array.from(this.values()).map(url => this.remove(url)));
-  //   await this.close();
-  // }
 
   private async connect() {
     await new Promise<void>(resolve => {

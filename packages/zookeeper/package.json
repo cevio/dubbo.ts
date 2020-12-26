@@ -13,7 +13,9 @@
     "dist"
   ],
   "scripts": {
-    "build": "rm -rf ./dist && tsc"
+    "build": "rm -rf ./dist && tsc",
+    "server": "ts-node test/server.ts",
+    "client": "ts-node test/client.ts"
   },
   "publishConfig": {
     "access": "public"

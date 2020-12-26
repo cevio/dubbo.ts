@@ -9,8 +9,8 @@ export class Balance<T extends TConsumerChannel = TConsumerChannel> extends Even
     super();
   }
 
-  public setManyChannels(uris: UrlWithParsedQuery[], callback: (host: string, port: number) => T) {
-    this.channels.clear();
+  public async setManyChannels(uris: UrlWithParsedQuery[], callback: (host: string, port: number) => T) {
+    await this.clear();
     for (let i = 0; i < uris.length; i++) {
       const hostname = uris[i].hostname;
       const port = Number(uris[i].port);
@@ -35,5 +35,13 @@ export class Balance<T extends TConsumerChannel = TConsumerChannel> extends Even
       if (prev.count > next.count) return next;
       return prev;
     });
+  }
+
+  public async clear() {
+    await Promise.all(Array.from(this.channels.values()).map(channel => {
+      channel.removeAllListeners('disconnect');
+      return channel.close();
+    }));
+    this.channels.clear();
   }
 }
