@@ -1,6 +1,6 @@
 {
   "name": "@dubbo.ts/server",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "dubbo server module",
   "author": "",
   "homepage": "https://github.com/cevio/dubbo.ts",
@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@dubbo.ts/application": "^2.0.4",
-    "@dubbo.ts/consumer": "^2.0.4",
+    "@dubbo.ts/consumer": "^2.0.5",
     "@dubbo.ts/protocol": "^2.0.1",
     "@dubbo.ts/provider": "^2.0.4",
     "@dubbo.ts/utils": "^2.0.0",
