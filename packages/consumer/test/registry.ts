@@ -25,7 +25,6 @@ consumer.on('disconnect', async () => console.log(' - [consumer]', 'server disco
 consumer.on('connect', async () => console.log(' + [consumer]', 'server connected'));
 consumer.on('reconnect', async () => console.log(' # [consumer]', 'server reconnected'));
 consumer.on('error', async e => console.error(' ! [consumer]', e));
-consumer.on('channels', async result => console.log(' $ [consumer]', result.map((res: any) => res.host)));
 consumer.on('heartbeat', async () => console.log(' @ [heartbeat]', 'send'))
 consumer.on('heartbeat:timeout', async () => console.log(' @ [heartbeat]', 'timeout'));
 

@@ -22,9 +22,7 @@
     "@dubbo.ts/application": "^2.0.4",
     "@dubbo.ts/protocol": "^2.0.1",
     "@dubbo.ts/utils": "^2.0.0",
-    "@types/reconnect-core": "^1.3.1",
     "promise-retry": "^2.0.1",
-    "reconnect-core": "^1.3.0",
     "wait-until-queue": "^1.0.2"
   },
   "devDependencies": {

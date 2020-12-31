@@ -3,7 +3,6 @@ import { Application } from '@dubbo.ts/application';
 import { Events } from '@dubbo.ts/utils';
 import { Channel } from './channel';
 import { getFinger } from './finger';
-import { UrlWithParsedQuery } from 'url';
 
 export type TConsumerEvents = TConsumerBaseEvents & {
   connect: [Channel],
