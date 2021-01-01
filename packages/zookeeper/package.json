@@ -1,6 +1,6 @@
 {
   "name": "@dubbo.ts/zookeeper",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "dubbo zookeeper module",
   "author": "",
   "homepage": "https://github.com/cevio/dubbo.ts",

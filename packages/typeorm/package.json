@@ -1,6 +1,6 @@
 {
   "name": "@dubbo.ts/typeorm",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "dubbo typeorm module",
   "author": "",
   "homepage": "https://github.com/cevio/dubbo.ts",
@@ -19,7 +19,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@dubbo.ts/server": "^2.0.8",
+    "@dubbo.ts/server": "^2.0.9",
     "typeorm": "^0.2.29"
   }
 }
