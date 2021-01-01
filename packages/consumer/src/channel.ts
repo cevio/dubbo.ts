@@ -35,6 +35,7 @@ export class Channel extends EventEmitter implements TConsumerChannel {
     this.pool.on('response', (data: TDecodeResponseSchema) => this.callbacks.resolveResponse(data));
     this.pool.on('heartbeat', () => this.consumer.emit('heartbeat'));
     this.pool.on('heartbeat:timeout', () => {
+      // 果断关闭
       this.close().then(() => this.consumer.emitAsync('heartbeat:timeout'));
     });
   }

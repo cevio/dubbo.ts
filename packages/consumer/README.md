@@ -4,7 +4,7 @@
   ## Usage
   
   ```
-  const container = require('@typeclient/consumer');
+  const container = require('@dubbo.ts/consumer');
   
-  // TODO: DEMONSTRATE API
+  // TODO: DEMONSTRATE API 
   ```

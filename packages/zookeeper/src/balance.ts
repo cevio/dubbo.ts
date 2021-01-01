@@ -3,7 +3,10 @@ import { EventEmitter } from 'events';
 import { TConsumerChannel } from '@dubbo.ts/application';
 import { getFinger } from './finger';
 export class Balance<T extends TConsumerChannel = TConsumerChannel> extends EventEmitter {
-  private readonly channels: Map<string, { channel: T, disconnect: () => void }> = new Map();
+  private readonly channels: Map<string, { 
+    channel: T, 
+    disconnect: () => void 
+  }> = new Map();
 
   constructor(public readonly id: string) {
     super();
