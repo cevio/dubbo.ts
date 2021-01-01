@@ -25,6 +25,7 @@ export class Channel extends EventEmitter implements TConsumerChannel {
     public readonly consumer: Consumer
   ) {
     super();
+    this.setMaxListeners(Infinity);
     this.id = getFinger(host, port);
     this.pool = new Pool(this.consumer.application.heartbeat, buf => {
       if (this.tcp.writable) {
@@ -32,11 +33,10 @@ export class Channel extends EventEmitter implements TConsumerChannel {
       }
     });
     this.pool.on('response', (data: TDecodeResponseSchema) => this.callbacks.resolveResponse(data));
-    this.pool.on('heartbeat:timeout', () => {
-      if (this.tcp) this.tcp.end();
-      this.consumer.emitAsync('heartbeat:timeout');
-    });
     this.pool.on('heartbeat', () => this.consumer.emit('heartbeat'));
+    this.pool.on('heartbeat:timeout', () => {
+      this.close().then(() => this.consumer.emitAsync('heartbeat:timeout'));
+    });
   }
 
   private connect() {
@@ -54,13 +54,17 @@ export class Channel extends EventEmitter implements TConsumerChannel {
     });
 
     this.tcp.on('error', onConnectError);
+
+    // server side disconnect.
     this.tcp.on('close', () => {
       this.tcp.removeListener('data', onData);
       this.close().catch(e => this.consumer.application.logger.error(e));
     });
 
     this.tcp.on('connect', () => {
+      // 取消临时错误绑定
       this.tcp.removeListener('error', onConnectError);
+      // 绑定数据流 传送入缓冲区 事件
       this.tcp.on('data', onData);
       this.consumer.emit('connect', this);
       this.waitUntil.resolve(this.tcp);
@@ -68,9 +72,15 @@ export class Channel extends EventEmitter implements TConsumerChannel {
   }
 
   public async close() {
+    // 关闭数据缓冲区
     this.pool.close();
+    // 关闭TCP连接
+    this.tcp.end();
+    // 触发 丢失连接 事件
     this.emit('disconnect');
+    // 移除所有Channel事件
     this.removeAllListeners();
+    // 通知消费者此Channel已丢失连接
     await this.consumer.emitAsync('disconnect', this);
   }
 

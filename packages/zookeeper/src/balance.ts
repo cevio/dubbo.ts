@@ -3,7 +3,7 @@ import { EventEmitter } from 'events';
 import { TConsumerChannel } from '@dubbo.ts/application';
 import { getFinger } from './finger';
 export class Balance<T extends TConsumerChannel = TConsumerChannel> extends EventEmitter {
-  private readonly channels: Map<string, T> = new Map();
+  private readonly channels: Map<string, { channel: T, disconnect: () => void }> = new Map();
 
   constructor(public readonly id: string) {
     super();
@@ -16,31 +16,35 @@ export class Balance<T extends TConsumerChannel = TConsumerChannel> extends Even
       const port = Number(uris[i].port);
       const id = getFinger(hostname, port);
       const channel = callback(hostname, port);
-      this.channels.set(id, channel);
-      channel.on('disconnect', ((_id) => {
-        return () => {
-          this.channels.delete(_id);
-          if (!this.channels.size) {
-            this.emit('disconnect');
-          }
-        }
-      })(id));
+      const disconnect = this.disconnect(id);
+      this.channels.set(id, { channel, disconnect });
+      channel.on('disconnect', disconnect);
+    }
+  }
+
+  private disconnect(id: string) {
+    return () => {
+      this.channels.delete(id);
+      if (!this.channels.size) {
+        this.emit('disconnect');
+      }
     }
   }
 
   public getOne(): T {
     const channels = Array.from(this.channels.values());
     if (!channels.length) return;
-    return channels.reduce((prev, next) => {
-      if (prev.count > next.count) return next;
+    const chunk = channels.reduce((prev, next) => {
+      if (prev.channel.count > next.channel.count) return next;
       return prev;
     });
+    return chunk.channel;
   }
 
   public async clear() {
-    await Promise.all(Array.from(this.channels.values()).map(channel => {
-      channel.removeAllListeners('disconnect');
-      return channel.close();
+    await Promise.all(Array.from(this.channels.values()).map(chunk => {
+      chunk.channel.removeListener('disconnect', chunk.disconnect);
+      return chunk.channel.close();
     }));
     this.channels.clear();
   }
