@@ -67,24 +67,40 @@ export class ZooKeeper extends Events<TRegistryEvents> implements TRegistry<TReg
     const invoker = this.consumerInvokers.get(id);
     return await new Promise<TConsumerChannel>((resolve, reject) => {
       switch (invoker.status) {
-        case -1: reject(invoker.error); break;
         case 1: resolve(invoker.balance.getOne()); break;
         default:
           invoker.resolveAndReject.push([resolve, reject]);
-          if (!invoker.pending) this.getConsumersByInvoker(id, invoker, name, options);
+          if (!invoker.pending) this.getConsumersByInvoker(id, invoker, name, options, () => {
+            if (this.consumerInvokers.has(id)) {
+              this.consumerInvokers.delete(id);
+            }
+          });
       }
     })
   }
 
-  private getConsumersByInvoker(id: string, invoker: TConsumerInvoker, name: string, options: { group?: string, version?: string } = {}) {
+  private async getConsumersByInvoker(
+    id: string, 
+    invoker: TConsumerInvoker, 
+    name: string, 
+    options: { group?: string, version?: string } = {},
+    notFound: () => void,
+  ) {
     invoker.pending = true;
     const consumer = this.application.consumer as TConsumer<TConsumerBaseEvents>;
     const path = `/${this.application.root}/${name}/providers`;
     if (invoker.stopHandler) consumer.off('stop', invoker.stopHandler);
-    invoker.stopHandler = () => this.remove(invoker.path);
+    invoker.stopHandler = () => {
+      notFound();
+      return this.remove(invoker.path)
+    };
     invoker.balance.removeAllListeners('disconnect');
-    this.query(path, (event) => this.notify(event, () => this.getConsumersByInvoker(id, invoker, name, options)))
+    this.query(path, (event) => this.notify(event, () => this.getConsumersByInvoker(id, invoker, name, options, notFound)))
     .then(urls => this.filterConsumers(urls, name, options))
+    .then(uris => {
+      if (!uris.length) return Promise.reject(new Error('cannot find the service:' + id));
+      return uris;
+    })
     .then(uris => invoker.balance.setManyChannels(uris, (host, port) => consumer.connect(host, port)))
     .then(() => {
       invoker.status = 1;
@@ -105,6 +121,7 @@ export class ZooKeeper extends Events<TRegistryEvents> implements TRegistry<TReg
       const pools = invoker.resolveAndReject.slice(0);
       invoker.resolveAndReject.length = 0;
       this.runAllRejects(pools, e);
+      return invoker.stopHandler();
     }).finally(() => invoker.pending = false);
   }
 

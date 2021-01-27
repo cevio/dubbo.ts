@@ -12,6 +12,10 @@ export class Balance<T extends TConsumerChannel = TConsumerChannel> extends Even
     super();
   }
 
+  get size() {
+    return this.channels.size;
+  }
+
   public async setManyChannels(uris: UrlWithParsedQuery[], callback: (host: string, port: number) => T) {
     await this.clear();
     for (let i = 0; i < uris.length; i++) {
@@ -28,6 +32,7 @@ export class Balance<T extends TConsumerChannel = TConsumerChannel> extends Even
   private disconnect(id: string) {
     return () => {
       this.channels.delete(id);
+      console.error('registry disconnect:', id);
       if (!this.channels.size) {
         this.emit('disconnect');
       }
