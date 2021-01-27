@@ -1,6 +1,6 @@
 {
   "name": "@dubbo.ts/consumer",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "dubbo consumer module",
   "author": "",
   "homepage": "https://github.com/cevio/dubbo.ts",
@@ -26,7 +26,7 @@
     "wait-until-queue": "^1.0.2"
   },
   "devDependencies": {
-    "@dubbo.ts/zookeeper": "^2.0.6",
+    "@dubbo.ts/zookeeper": "^2.0.7",
     "js-to-java": "^2.6.1"
   }
 }
